@@ -36,9 +36,12 @@ export default function Register() {
     try {
       const resp = await apiClient("/api/auth/register/", { method: "POST", body: form });
       if (resp.IsSuccess) {
+        console.log("Registration Response:", resp); // Debug log
+        const regId = resp.Result?.user?.registration_id || resp.Result?.registration_id || resp.Result?.id;
+        console.log("Registration ID to send:", regId); // Debug log
         setToast({ type: "success", message: "Registration successful! OTP sent to email." });
         setTimeout(() => {
-          navigate("/verify-otp", { state: { email: form.email, purpose: "REGISTER", registration_id: resp.Result.registration_id } });
+          navigate("/verify-otp", { state: { email: form.email, purpose: "REGISTER", registration_id: regId } });
         }, 2000);
       } else {
         const errorMsg = Array.isArray(resp.ErrorMessage) ? resp.ErrorMessage.join("; ") : JSON.stringify(resp.ErrorMessage);

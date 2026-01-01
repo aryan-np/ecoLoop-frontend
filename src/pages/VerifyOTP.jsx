@@ -10,20 +10,12 @@ export default function VerifyOTP() {
   const loc = useLocation();
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [purpose, setPurpose] = useState("REGISTER");
-  const [registrationId, setRegistrationId] = useState("");
+  const [email, setEmail] = useState(loc.state?.email || "");
+  const [purpose, setPurpose] = useState(loc.state?.purpose || "REGISTER");
+  const [registrationId, setRegistrationId] = useState(loc.state?.registration_id || "");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (loc.state) {
-      setEmail(loc.state.email || "");
-      setPurpose(loc.state.purpose || "REGISTER");
-      setRegistrationId(loc.state.registration_id || "");
-    }
-  }, [loc]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -34,9 +26,15 @@ export default function VerifyOTP() {
     setLoading(true);
     try {
       const body = { email, purpose, otp };
-      if (purpose === "REGISTER" && registrationId) {
-        body.registration_id = registrationId;
+      // Always include registration_id for REGISTER purpose
+      if (purpose === "REGISTER") {
+        if (registrationId) {
+          body.registration_id = registrationId;
+        } else if (loc.state?.registration_id) {
+          body.registration_id = loc.state.registration_id;
+        }
       }
+      console.log("OTP Request Body:", body); // Debug log
       const resp = await apiClient("/api/auth/otp/verify/", { method: "POST", body });
       if (resp.IsSuccess) {
         if (resp.Result && resp.Result.tokens) {

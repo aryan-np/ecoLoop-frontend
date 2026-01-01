@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import apiClient from "../api/client";
 import ProductCard from "../components/ProductCard";
 import Toast from "../components/Toast";
@@ -7,42 +7,58 @@ import AuthContext from "../auth/AuthProvider";
 
 export default function Products() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [toast, setToast] = useState(null);
+  const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page")) || 1);
   const productsRef = useRef(null);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    loadProducts(currentPage);
+  }, [currentPage]);
 
-  const loadProducts = async () => {
+  const loadProducts = async (page = 1) => {
     setLoading(true);
     try {
-      const resp = await apiClient("/api/product/products/", { method: "GET" });
+      const resp = await apiClient(`/api/product/products/?page=${page}`, { method: "GET" });
 
-      // Handle multiple backend shapes
-      if (Array.isArray(resp)) {
-        setProducts(resp);
-      } else if (resp && Array.isArray(resp.results)) {
-        setProducts(resp.results);
-      } else if (resp && resp.IsSuccess) {
-        const r = resp.Result;
-        if (Array.isArray(r)) setProducts(r);
-        else if (r && Array.isArray(r.results)) setProducts(r.results);
-        else if (r) setProducts(Array.isArray(r) ? r : [r]);
-        else setProducts([]);
-      } else {
-        if (resp && Object.keys(resp).length === 0) setProducts([]);
-        else if (resp) setProducts(Array.isArray(resp) ? resp : [resp]);
-        else setProducts([]);
+      let productsArray = [];
+      let paginationData = { count: 0, next: null, previous: null };
+
+      // Handle the paginated response format
+      if (resp && resp.IsSuccess && resp.Result) {
+        const result = resp.Result;
+        if (result.results && Array.isArray(result.results)) {
+          productsArray = result.results;
+          paginationData = {
+            count: result.count || 0,
+            next: result.next,
+            previous: result.previous
+          };
+        }
+      } else if (resp && resp.results && Array.isArray(resp.results)) {
+        productsArray = resp.results;
+        paginationData = {
+          count: resp.count || 0,
+          next: resp.next,
+          previous: resp.previous
+        };
       }
+
+      // Ensure all items are objects with required fields
+      const validProducts = (productsArray || []).filter(p => p && typeof p === 'object' && p.id);
+      setProducts(validProducts);
+      setPagination(paginationData);
     } catch (err) {
+      console.error("Error loading products:", err);
       const errorMessage = err.message || "Failed to load products";
       setToast({ type: "error", message: errorMessage });
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -57,6 +73,13 @@ export default function Products() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
+      {/* Error Display */}
+      {toast && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          {toast.message}
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Browse Items</h1>
@@ -101,7 +124,10 @@ export default function Products() {
           <p className="text-xs text-gray-600">Your saved items</p>
         </button>
         
-        <button className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-300 p-4 text-center hover:shadow-md transition hover:border-purple-400">
+        <button 
+          onClick={() => navigate("/my-listings")}
+          className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-300 p-4 text-center hover:shadow-md transition hover:border-purple-400"
+        >
           <div className="text-3xl mb-2 bg-purple-500 text-white p-2 rounded-lg w-fit mx-auto">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4" />
@@ -188,10 +214,68 @@ export default function Products() {
             {searchTerm && <p className="text-sm text-gray-500">Try adjusting your search or filters</p>}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
             {filteredProducts.map((p) => (
               <ProductCard product={p} key={p.id} />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && pagination.count > 0 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => {
+                setCurrentPage(Math.max(1, currentPage - 1));
+                setSearchParams({ page: Math.max(1, currentPage - 1) });
+              }}
+              disabled={!pagination.previous || currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            
+            <div className="flex gap-1">
+              {Array.from({ length: Math.ceil(pagination.count / 10) }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => {
+                    setCurrentPage(page);
+                    setSearchParams({ page });
+                  }}
+                  className={`px-3 py-2 rounded-lg font-medium transition ${
+                    currentPage === page
+                      ? "bg-green-600 text-white"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => {
+                setCurrentPage(currentPage + 1);
+                setSearchParams({ page: currentPage + 1 });
+              }}
+              disabled={!pagination.next}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Scroll to Top Button */}
+        {!loading && pagination.count > 0 && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
+            >
+              ↑ Scroll to Top
+            </button>
           </div>
         )}
       </div>

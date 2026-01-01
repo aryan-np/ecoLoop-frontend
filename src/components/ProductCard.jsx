@@ -5,6 +5,19 @@ import AuthContext from "../auth/AuthProvider";
 export default function ProductCard({ product }) {
   const { isAuthenticated } = useContext(AuthContext);
 
+  // Prevent rendering if product is invalid
+  if (!product || !product.id) {
+    return null;
+  }
+
+  // Helper function to safely extract string values (handle objects)
+  const getString = (value) => {
+    if (!value) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "object" && value.name) return value.name;
+    return String(value);
+  };
+
   const handleFavoriteClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -41,15 +54,15 @@ export default function ProductCard({ product }) {
 
         {/* Product Info */}
         <div className="px-4 py-3 flex-1 flex flex-col">
-          <h3 className="font-bold text-lg text-gray-900 mb-1 line-clamp-2">{product.title}</h3>
+          <h3 className="font-bold text-lg text-gray-900 mb-1 line-clamp-2">{getString(product.title)}</h3>
           
           <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            <span className="font-semibold">{product.condition || "Good"}</span>
+            <span className="font-semibold">{getString(product.condition) || "Good"}</span>
             <span>•</span>
-            <span>{product.owner_name || product.owner_email}</span>
+            <span>{getString(product.owner_name || product.owner_email)}</span>
           </div>
 
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description || "No description"}</p>
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{getString(product.description) || "No description"}</p>
 
           {/* Price and Status */}
           <div className="flex items-center justify-between mt-auto">

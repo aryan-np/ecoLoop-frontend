@@ -10,6 +10,7 @@ import NavBar from "./components/NavBar";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import ProductForm from "./pages/ProductForm";
+import MyListings from "./pages/MyListings";
 import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
 
@@ -36,6 +37,7 @@ function InnerApp() {
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/my-listings" element={<MyListings />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/new" element={<ProductForm />} />
           <Route path="/products/:id" element={<ProductDetail />} />

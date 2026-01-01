@@ -1,43 +1,60 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import AuthContext from "../auth/AuthProvider";
 import Alert from "../components/Alert";
 
+function getName(v) {
+  if (!v) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "object" && v.name) return v.name;
+  return "";
+}
+
+function formatPrice(isFree, price) {
+  if (isFree) return "Free";
+  if (price === null || price === undefined || price === "") return "N/A";
+  return `NPR ${price}`;
+}
+
+function listingBadge(productType) {
+  const t = (productType || "").toLowerCase();
+  if (t === "sell") return { label: "For Sale", cls: "bg-green-600 text-white" };
+  if (t === "donate") return { label: "Donate", cls: "bg-purple-600 text-white" };
+  if (t === "recycle") return { label: "Recycle", cls: "bg-teal-600 text-white" };
+  return { label: "Listing", cls: "bg-blue-600 text-white" };
+}
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { access, user, isAuthenticated } = useContext(AuthContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [isFavorite, setIsFavorite] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setError(null);
       try {
         const resp = await apiClient(`/api/product/products/${id}/`, { method: "GET" });
 
         let data = null;
         if (!resp) throw new Error("Empty response from server");
 
-        if (resp.IsSuccess && resp.Result) {
-          data = resp.Result;
-        } else if (resp.Result) {
-          data = resp.Result;
-        } else if (resp.id || resp.title) {
-          data = resp;
-        } else if (resp.results && Array.isArray(resp.results) && resp.results.length > 0) {
-          data = resp.results[0];
-        } else {
-          throw new Error("Unexpected response format from products endpoint");
-        }
+        if (resp.IsSuccess && resp.Result) data = resp.Result;
+        else if (resp.Result) data = resp.Result;
+        else if (resp.id || resp.title) data = resp;
+        else if (resp.results && Array.isArray(resp.results) && resp.results.length > 0) data = resp.results[0];
+        else throw new Error("Unexpected response format from products endpoint");
 
         setProduct(data);
       } catch (err) {
-        setError(err.message || JSON.stringify(err));
+        setError(err?.message || JSON.stringify(err));
       } finally {
         setLoading(false);
       }
@@ -45,46 +62,40 @@ export default function ProductDetail() {
     load();
   }, [id]);
 
-  const isOwner = () => {
-    if (!user || !product) return false;
-    return product.is_owner || user.id === product.owner_id;
-  };
+  const normalized = useMemo(() => {
+    if (!product) return null;
+    const categoryName = getName(product.category) || "N/A";
+    const conditionName = getName(product.condition) || "N/A";
 
-  const remove = async () => {
-    if (!confirm("Delete this product permanently?")) return;
-    setDeleting(true);
-    try {
-      await apiClient(`/api/product/products/${id}/`, { method: "DELETE" });
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message || JSON.stringify(err));
-      setDeleting(false);
-    }
-  };
+    return {
+      ...product,
+      categoryName,
+      conditionName,
+      owner_name: product.owner_name || "Unknown",
+      owner_email: product.owner_email || "",
+      location: product.location || "N/A",
+      displayPrice: formatPrice(product.is_free, product.price),
+      badge: listingBadge(product.product_type),
+    };
+  }, [product]);
 
-  const edit = () => navigate(`/products/${id}/edit`);
+  const isOwner = useMemo(() => {
+    if (!user || !normalized) return false;
+    return !!normalized.is_owner || user.id === normalized.owner_id;
+  }, [user, normalized]);
 
-  const toggleFavorite = async () => {
+  const toggleFavorite = () => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
-    setIsFavorite(!isFavorite);
-    // TODO: Call API to add/remove favorite when endpoint is available
+    setIsFavorite((p) => !p);
+    // TODO: call favorite endpoint when available
   };
 
-  const formatDate = (iso) => {
-    if (!iso) return "-";
-    try {
-      return new Date(iso).toLocaleDateString();
-    } catch (e) {
-      return iso;
-    }
-  };
-
-  return (
-    <main>
-      {loading ? (
+  if (loading) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-10">
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-2">
             <svg className="animate-spin h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -94,181 +105,158 @@ export default function ProductDetail() {
             <p className="text-gray-600">Loading product...</p>
           </div>
         </div>
-      ) : error ? (
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-6">
         <Alert type="error">{error}</Alert>
-      ) : product ? (
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
-            {isAuthenticated && (
+      </main>
+    );
+  }
+
+  if (!normalized) return null;
+
+  return (
+    <main className="max-w-6xl mx-auto px-4 py-6">
+      {/* Top back */}
+      <button
+        onClick={() => navigate(-1)}
+        className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+      >
+        <span className="text-lg">←</span> Back
+      </button>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Image */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="w-full aspect-[16/10] bg-gray-100">
+            {normalized.image ? (
+              <img src={normalized.image} alt={normalized.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                No image available
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Main Card */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${normalized.badge.cls}`}>
+                  {normalized.badge.label}
+                </span>
+
+                <h1 className="text-3xl font-bold text-gray-900 mt-3">
+                  {normalized.title}
+                </h1>
+
+                <p className="text-lg font-bold text-green-700 mt-2">
+                  {normalized.displayPrice}
+                </p>
+              </div>
+
+              {/* Heart */}
               <button
                 onClick={toggleFavorite}
-                className={`text-4xl transition ${isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
+                className={`text-2xl leading-none mt-1 ${isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
+                aria-label="favorite"
+                title="Save to favorites"
               >
-                {isFavorite ? "❤" : "♡"}
+                {isFavorite ? "♥" : "♡"}
               </button>
+            </div>
+
+            {/* Details rows (like screenshot) */}
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Category</span>
+                <span className="text-gray-900 font-medium">{normalized.categoryName}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Condition</span>
+                <span className="text-gray-900 font-medium">{normalized.conditionName}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Location</span>
+                <span className="text-gray-900 font-medium">{normalized.location}</span>
+              </div>
+            </div>
+
+            {/* Owner Info Box */}
+            {isOwner && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-900 font-medium">This is your listing</p>
+                <button
+                  onClick={() => navigate("/my-listings")}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-semibold mt-2 flex items-center gap-1"
+                >
+                  Manage in My Listings →
+                </button>
+              </div>
+            )}
+
+            {/* Actions (like screenshot) */}
+            {!isOwner && (
+              <div className="mt-6 space-y-3">
+                <a
+                  href={`mailto:${normalized.owner_email}?subject=Interested%20in%20${encodeURIComponent(normalized.title)}`}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Message Seller
+                </a>
+
+                <button
+                  onClick={toggleFavorite}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50 transition"
+                >
+                  <svg className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  Save to Favorites
+                </button>
+              </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              {/* Status Badges */}
-              <div className="flex gap-2 mb-6 flex-wrap">
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  product.category === "Recycle" ? "bg-teal-100 text-teal-700" :
-                  product.category === "Donate" ? "bg-purple-100 text-purple-700" :
-                  product.category === "Sell" ? "bg-green-100 text-green-700" :
-                  "bg-blue-100 text-blue-700"
-                }`}>
-                  {product.category || "Browse"}
-                </span>
-                
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  product.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-                }`}>
-                  {product.is_active ? "Active" : "Inactive"}
-                </span>
+          {/* Description card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-900">Description</h2>
+            <p className="text-sm text-gray-700 mt-2 whitespace-pre-line">
+              {normalized.description || "No description provided."}
+            </p>
+          </div>
 
-                {product.is_free && (
-                  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
-                    Free
-                  </span>
-                )}
-
-                {product.condition && (
-                  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700">
-                    {product.condition}
-                  </span>
-                )}
+          {/* Seller info card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-900">Seller Information</h2>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">
+                {normalized.owner_name?.[0]?.toUpperCase() || "U"}
               </div>
-
-            {/* Description */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Photos</h2>
-              {product.image ? (
-                <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center mb-4">
-                  <img 
-                    src={product.image} 
-                    alt={product.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-center text-gray-400">
-                    <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p>No image available</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Description</h2>
-              <p className="text-gray-700 whitespace-pre-line">{product.description || "No description provided."}</p>
-              </div>
-
-              {/* Product Details */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Price</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {product.is_free ? <span className="text-green-600">Free</span> : `NPR ${product.price}`}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Condition</p>
-                    <p className="text-lg font-semibold text-gray-900">{product.condition || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Category</p>
-                    <p className="text-lg font-semibold text-gray-900">{product.category || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Posted On</p>
-                    <p className="text-lg font-semibold text-gray-900">{formatDate(product.created_at)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              {/* Seller Info */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Seller Information</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">Name</p>
-                    <p className="font-semibold text-gray-900">{product.owner_name || "Unknown"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">Email</p>
-                    <p className="font-semibold text-gray-900 break-all">{product.owner_email}</p>
-                  </div>
-                  {product.owner_address1 && (
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase">Address</p>
-                      <p className="font-semibold text-gray-900">
-                        {product.owner_address1} {product.owner_address2 ? `, ${product.owner_address2}` : ""}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="space-y-3">
-                {!isOwner() ? (
-                  <>
-                    <a
-                      href={`mailto:${product.owner_email}?subject=Interested in ${encodeURIComponent(product.title)}`}
-                      className="block w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition text-center"
-                    >
-                      Contact Seller
-                    </a>
-                    <button
-                      onClick={() => navigate("/dashboard")}
-                      className="w-full py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
-                    >
-                      Back to Products
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={edit}
-                      className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Edit Product
-                    </button>
-                    <button
-                      onClick={remove}
-                      disabled={deleting}
-                      className="w-full py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
-                    >
-                      {deleting ? "Deleting..." : "Delete Product"}
-                    </button>
-                    <button
-                      onClick={() => navigate("/dashboard")}
-                      className="w-full py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
-                    >
-                      Back to Dashboard
-                    </button>
-                  </>
-                )}
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{normalized.owner_name}</p>
+                <p className="text-xs text-gray-500">Verified Seller</p>
               </div>
             </div>
           </div>
+
+          {/* Report */}
+          <button className="text-sm text-gray-500 hover:text-gray-800">
+            Report this listing
+          </button>
         </div>
-      ) : null}
+      </div>
     </main>
   );
 }
