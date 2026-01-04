@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import apiClient from "../api/client";
+import authAPI from "../api/auth";
 import AuthContext from "../auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import Input from "../components/Input";
@@ -26,7 +26,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const resp = await apiClient("/api/auth/login/", { method: "POST", body: { email: form.email, password: form.password, method: "PASSWORD" } });
+      const resp = await authAPI.loginWithPassword(form.email, form.password);
       if (resp.IsSuccess) {
         if (resp.Result?.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });
@@ -52,7 +52,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const resp = await apiClient("/api/auth/login/", { method: "POST", body: { email: form.email, method: "OTP" } });
+      const resp = await authAPI.login(form.email, "OTP");
       if (resp.IsSuccess) {
         setToast({ type: "info", message: "OTP sent! Check your email..." });
         setTimeout(() => navigate("/verify-otp", { state: { email: form.email, purpose: "LOGIN" } }), 1500);

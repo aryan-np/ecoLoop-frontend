@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import apiClient from "../api/client";
+import authAPI from "../api/auth";
 import tokenService from "./tokenService";
 import { useNavigate } from "react-router-dom";
 
@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
     const refresh = tokenService.getRefresh();
     if (refresh) {
       try {
-        await apiClient("/api/auth/logout/", { method: "POST", body: { refresh } });
+        await authAPI.logout(refresh);
       } catch (e) {
         // ignore errors
       }

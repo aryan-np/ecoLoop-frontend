@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiClient from "../api/client";
+import productAPI from "../api/product";
 import AuthContext from "../auth/AuthProvider";
 import Alert from "../components/Alert";
 
@@ -41,7 +41,7 @@ export default function ProductDetail() {
       setLoading(true);
       setError(null);
       try {
-        const resp = await apiClient(`/api/product/products/${id}/`, { method: "GET" });
+        const resp = await productAPI.getProductById(id);
 
         let data = null;
         if (!resp) throw new Error("Empty response from server");

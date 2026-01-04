@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import apiClient from "../api/client";
+import authAPI from "../api/auth";
 import { useNavigate } from "react-router-dom";
 import Alert from "../components/Alert";
 import Toast from "../components/Toast";
@@ -34,7 +34,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const resp = await apiClient("/api/auth/register/", { method: "POST", body: form });
+      const resp = await authAPI.register(form.email, form.full_name, form.phone_number, form.password, form.confirm_password);
       if (resp.IsSuccess) {
         console.log("Registration Response:", resp); // Debug log
         const regId = resp.Result?.user?.registration_id || resp.Result?.registration_id || resp.Result?.id;

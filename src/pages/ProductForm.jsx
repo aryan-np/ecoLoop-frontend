@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import apiClient from "../api/client";
+import productAPI from "../api/product";
 import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
 
@@ -31,8 +31,8 @@ export default function ProductForm() {
     const loadMeta = async () => {
       try {
         const [cResp, condResp] = await Promise.all([
-          apiClient("/api/product/categories/", { method: "GET" }),
-          apiClient("/api/product/conditions/", { method: "GET" }),
+          productAPI.getCategories(),
+          productAPI.getConditions(),
         ]);
 
         setCategories(Array.isArray(cResp?.results) ? cResp.results : []);
@@ -50,7 +50,7 @@ export default function ProductForm() {
 
     const load = async () => {
       try {
-        const resp = await apiClient(`/api/product/products/${id}/`, { method: "GET" });
+        const resp = await productAPI.getProductById(id);
         const data = resp?.IsSuccess ? resp.Result : resp?.Result || resp;
 
         if (!data) {
@@ -129,9 +129,9 @@ export default function ProductForm() {
 
       let resp;
       if (id) {
-        resp = await apiClient(`/api/product/products/${id}/`, { method: "PUT", body: fd });
+        resp = await productAPI.updateProduct(id, fd);
       } else {
-        resp = await apiClient(`/api/product/products/`, { method: "POST", body: fd });
+        resp = await productAPI.createProduct(fd);
       }
 
       if (resp?.IsSuccess) {

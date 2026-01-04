@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../api/client";
+import productAPI from "../api/product";
 import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
 
@@ -31,7 +31,7 @@ export default function MyListings() {
   const loadListings = async () => {
     setLoading(true);
     try {
-      const resp = await apiClient("/api/product/listing/", { method: "GET" });
+      const resp = await productAPI.getListings();
 
       let productsArray = [];
 
@@ -61,10 +61,7 @@ export default function MyListings() {
   const markAsSold = async (productId) => {
     setUpdating(productId);
     try {
-      const resp = await apiClient(`/api/product/products/${productId}/`, {
-        method: "PATCH",
-        body: { status: "sold" },
-      });
+      const resp = await productAPI.partialUpdateProduct(productId, { status: "sold" });
 
       if (resp && (resp.IsSuccess || resp.id)) {
         setToast({ type: "success", message: "Product marked as sold" });
@@ -84,7 +81,7 @@ export default function MyListings() {
 
     setUpdating(productId);
     try {
-      await apiClient(`/api/product/products/${productId}/`, { method: "DELETE" });
+      await productAPI.deleteProduct(productId);
       setToast({ type: "success", message: "Product deleted successfully" });
       loadListings();
     } catch (err) {

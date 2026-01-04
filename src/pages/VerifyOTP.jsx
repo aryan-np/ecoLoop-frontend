@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import apiClient from "../api/client";
+import authAPI from "../api/auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthProvider";
 import Alert from "../components/Alert";
@@ -35,7 +35,7 @@ export default function VerifyOTP() {
         }
       }
       console.log("OTP Request Body:", body); // Debug log
-      const resp = await apiClient("/api/auth/otp/verify/", { method: "POST", body });
+      const resp = await authAPI.verifyOTP(email, otp, purpose, registrationId);
       if (resp.IsSuccess) {
         if (resp.Result && resp.Result.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });

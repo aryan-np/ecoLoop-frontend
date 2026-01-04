@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import AuthContext from "../auth/AuthProvider";
-import apiClient from "../api/client";
+import authAPI from "../api/auth";
 import Toast from "../components/Toast";
 
 export default function Profile() {
@@ -21,7 +21,7 @@ export default function Profile() {
     setLoading(true);
     try {
       // Try multiple endpoints for flexibility
-      let resp = await apiClient("/api/auth/user-profile/", { method: "GET" });
+      let resp = await authAPI.getUserProfile();
       
       let profileData = null;
       // Handle paginated response format
