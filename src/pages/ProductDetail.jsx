@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import productAPI from "../api/product";
+import { createThreadAndSendMessage } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
 import Alert from "../components/Alert";
 
@@ -28,13 +29,19 @@ function listingBadge(productType) {
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useContext(AuthContext);
+  const { user, isAuthenticated, access } = useContext(AuthContext);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [isFavorite, setIsFavorite] = useState(false);
+  const [messagingLoading, setMessagingLoading] = useState(false);
+
+  // Scroll to top when product ID changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   useEffect(() => {
     const load = async () => {
@@ -93,6 +100,50 @@ export default function ProductDetail() {
     // TODO: call favorite endpoint when available
   };
 
+  const handleMessageSeller = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (messagingLoading) return;
+    
+    setMessagingLoading(true);
+    try {
+      console.log("Product:", product);
+      console.log("Normalized:", normalized);
+      
+      const ownerId = product?.owner_id;
+      
+      if (!ownerId) {
+        console.error("Owner ID not found. Product object:", product);
+        alert("Could not identify seller. Please try again.");
+        setMessagingLoading(false);
+        return;
+      }
+
+      const defaultMessage = "Is this item still available?";
+      const threadResponse = await createThreadAndSendMessage(
+        access,
+        ownerId,
+        defaultMessage,
+        product?.id
+      );
+      
+      console.log("Thread response:", threadResponse);
+      
+      // Navigate to messages page with the thread ID
+      navigate("/messages", { 
+        state: { threadId: threadResponse.id || threadResponse.thread_id } 
+      });
+    } catch (err) {
+      console.error("Error creating message thread:", err);
+      alert("Failed to send message. Please try again.");
+    } finally {
+      setMessagingLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="max-w-6xl mx-auto px-4 py-10">
@@ -129,12 +180,12 @@ export default function ProductDetail() {
         <span className="text-lg">←</span> Back
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 auto-rows-max">
         {/* Left: Image */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="w-full aspect-[16/10] bg-gray-100">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-6">
+          <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
             {normalized.image ? (
-              <img src={normalized.image} alt={normalized.title} className="w-full h-full object-cover" />
+              <img src={normalized.image} alt={normalized.title} className="w-full h-full object-contain p-4" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
                 No image available
@@ -144,7 +195,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Right: Main Card */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)]">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -206,15 +257,16 @@ export default function ProductDetail() {
             {/* Actions (like screenshot) */}
             {!isOwner && (
               <div className="mt-6 space-y-3">
-                <a
-                  href={`mailto:${normalized.owner_email}?subject=Interested%20in%20${encodeURIComponent(normalized.title)}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+                <button
+                  onClick={handleMessageSeller}
+                  disabled={messagingLoading}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-not-allowed"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  Message Seller
-                </a>
+                  {messagingLoading ? "Sending..." : "Message Seller"}
+                </button>
 
                 <button
                   onClick={toggleFavorite}

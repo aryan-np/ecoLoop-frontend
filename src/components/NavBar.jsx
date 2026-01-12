@@ -12,8 +12,8 @@ export default function NavBar() {
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo and brand */}
         <NavLink to="/products" className="flex items-center gap-2 font-bold text-lg text-gray-900 hover:text-green-600 transition">
-          <img src={logo} alt="ecoLoop" className="w-8 h-8" />
-          <span className="hidden sm:inline">ecoLoop</span>
+          <img src={logo} alt="EcoLoop" className="w-8 h-8" />
+          <span className="hidden sm:inline">EcoLoop</span>
         </NavLink>
 
         {/* Desktop navigation */}
@@ -53,7 +53,7 @@ export default function NavBar() {
               <>
                 <NavLink
                   to="/profile"
-                  className={({isActive}) => `flex items-center gap-2 px-4 py-2 rounded-lg transition ${isActive ? 'bg-gray-200 text-gray-900 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
+                  className={({isActive}) => `flex items-center gap-2 px-4 py-2 rounded-lg transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -62,9 +62,12 @@ export default function NavBar() {
                 </NavLink>
                 <button
                   onClick={logout}
-                  className="text-sm px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition text-gray-700 hover:text-green-600`}
                 >
-                  Logout
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="text-sm font-medium">Logout</span>
                 </button>
               </>
             )}
@@ -118,7 +121,7 @@ export default function NavBar() {
               </svg>
               <span>Messages</span>
             </NavLink>
-            <NavLink to="/profile" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-gray-200 text-gray-900 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <NavLink to="/profile" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -127,9 +130,12 @@ export default function NavBar() {
             {isAuthenticated && (
               <button
                 onClick={() => { setOpen(false); logout(); }}
-                className="text-left py-2 px-3 text-red-600 hover:bg-red-50 rounded-lg transition"
+                className="flex items-center gap-3 py-2 px-3 text-gray-700 hover:text-green-600 rounded-lg transition"
               >
-                Logout
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
               </button>
             )}
           </nav>

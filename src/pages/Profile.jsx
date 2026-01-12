@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import AuthContext from "../auth/AuthProvider";
 import authAPI from "../api/auth";
+import apiClient from "../api/client";
 import Toast from "../components/Toast";
 
 export default function Profile() {

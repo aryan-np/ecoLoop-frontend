@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -14,6 +14,7 @@ import ProductForm from "./pages/ProductForm";
 import MyListings from "./pages/MyListings";
 import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
+import Messages from "./pages/Messages";
 
 export default function App() {
   return (
@@ -25,13 +26,15 @@ export default function App() {
 
 function InnerApp() {
   const { isAuthenticated } = useContext(AuthContext);
+  const location = useLocation();
+  const hideNavBar = ['/register', '/login', '/verify-otp'].includes(location.pathname);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {isAuthenticated ? (
         <>
-          <NavBar />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          {!hideNavBar && <NavBar />}
+          <main className={hideNavBar ? "flex-grow min-h-screen" : "flex-grow container mx-auto px-4 py-8 min-h-screen"}>
             <Routes>
               <Route path="/" element={<Products />} />
               <Route path="/register" element={<Register />} />
@@ -40,6 +43,7 @@ function InnerApp() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-listings" element={<MyListings />} />
+              <Route path="/messages" element={<Messages />} />
               <Route path="/products" element={<Products />} />
               <Route path="/products/new" element={<ProductForm />} />
               <Route path="/products/:id" element={<ProductDetail />} />
