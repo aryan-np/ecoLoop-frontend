@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getThreads, getMessages } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
 
@@ -16,6 +16,7 @@ function timeShort(ts) {
 
 export default function Messages() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { access, user } = useContext(AuthContext);
   const [threads, setThreads] = useState([]);
   const [selectedThread, setSelectedThread] = useState(null);
@@ -108,7 +109,8 @@ export default function Messages() {
   useEffect(() => {
     if (!selectedThread) return;
 
-    const url = `ws://127.0.0.1:8000/ws/chat/${selectedThread.id}/?token=${access}`;
+    const wsUrl = import.meta.env.VITE_WS_BASE_URL;
+    const url = `${wsUrl}/ws/chat/${selectedThread.id}/?token=${access}`;
     try {
       const ws = new WebSocket(url);
       wsRef.current = ws;
@@ -197,7 +199,7 @@ export default function Messages() {
               <button
                 key={t.id}
                 onClick={() => setSelectedThread(t)}
-                className={`w-full text-left px-4 py-3 border-b flex gap-3 items-start transition`}
+                className={`w-full text-left px-4 py-3 border-b flex gap-3 items-center transition`}
                 style={{
                   borderColor: 'var(--border)',
                   backgroundColor: selectedThread?.id === t.id ? 'var(--section)' : 'transparent',
@@ -219,6 +221,11 @@ export default function Messages() {
                       {timeShort(t.updated_at || (t.last_message && t.last_message.created_at))}
                     </div>
                   </div>
+                  {t.product_name && (
+                    <div className="text-xs mt-1 truncate" style={{color: 'var(--eco-primary)'}}>
+                      About: {t.product_name}
+                    </div>
+                  )}
                   <div className="text-xs mt-1 truncate" style={{color: 'var(--text-secondary)'}}>
                     {t.last_message ? t.last_message.content : "No messages yet"}
                   </div>
@@ -238,17 +245,25 @@ export default function Messages() {
       <div className="hidden md:flex flex-1 flex-col rounded-lg overflow-hidden" style={{backgroundColor: 'var(--bg)'}}>
         {selectedThread ? (
           <>
-            <div className="p-4 border-b flex items-center gap-3 flex-shrink-0" style={{borderColor: 'var(--border)'}}>
+            <div className="p-4 border-b flex items-start gap-3 flex-shrink-0" style={{borderColor: 'var(--border)'}}>
               {selectedThread.participant_profile_picture ? (
-                <img src={selectedThread.participant_profile_picture} alt="profile" className="w-10 h-10 rounded-full object-cover" />
+                <img src={selectedThread.participant_profile_picture} alt="profile" className="w-12 h-12 rounded-full object-cover flex-shrink-0 mt-1" />
               ) : (
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold" style={{backgroundColor: 'var(--section)', color: 'var(--eco-primary)'}}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center font-semibold flex-shrink-0 mt-1" style={{backgroundColor: 'var(--section)', color: 'var(--eco-primary)'}}>
                   {(selectedThread.participant_name || "U").charAt(0)}
                 </div>
               )}
-              <div>
+              <div className="flex-1 min-w-0">
                 <div className="font-semibold" style={{color: 'var(--text-primary)'}}>{selectedThread.participant_name || selectedThread.participant_email}</div>
-                <div className="text-sm" style={{color: 'var(--text-secondary)'}}>About: Vintage Wooden Chair</div>
+                {selectedThread.product_name && selectedThread.product_id && (
+                  <button
+                    onClick={() => navigate(`/products/${selectedThread.product_id}`)}
+                    className="text-sm hover:underline cursor-pointer transition mt-1 block"
+                    style={{color: 'var(--eco-primary)'}}
+                  >
+                    About: {selectedThread.product_name}
+                  </button>
+                )}
               </div>
             </div>
 

@@ -32,7 +32,7 @@ export async function createThreadAndSendMessage(token, recipientId, message, pr
     body: JSON.stringify({
       user2: recipientId,
       message: message,
-      product_id: productId,
+      product: productId,
     }),
   });
   const json = await res.json();

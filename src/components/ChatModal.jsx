@@ -33,10 +33,20 @@ export default function ChatModal({ thread, onClose }) {
 
   useEffect(() => {
     // open websocket
-    const url = `ws://127.0.0.1:8000/ws/chat/${thread.id}/`;
+    const wsUrl = import.meta.env.VITE_WS_BASE_URL;
+    const url = `${wsUrl}/ws/chat/${thread.id}/?token=${access}`;
     try {
       const ws = new WebSocket(url);
       wsRef.current = ws;
+      
+      ws.onerror = (err) => {
+        console.error("WebSocket error:", err);
+      };
+      
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+      };
+      
       ws.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
@@ -52,11 +62,11 @@ export default function ChatModal({ thread, onClose }) {
             setTimeout(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" }), 40);
           }
         } catch (err) {
-          // ignore
+          console.error("Message parse error:", err);
         }
       };
     } catch (err) {
-      // ignore
+      console.error("WebSocket creation error:", err);
     }
 
     return () => {
@@ -64,7 +74,7 @@ export default function ChatModal({ thread, onClose }) {
         wsRef.current?.close();
       } catch {}
     };
-  }, [thread.id]);
+  }, [thread.id, access]);
 
   function send() {
     if (!text.trim()) return;
