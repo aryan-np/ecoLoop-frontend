@@ -24,7 +24,7 @@ export default function MessageDropdown() {
     async function load() {
       setLoading(true);
       try {
-        const res = await getThreads(access);
+        const res = await getThreads();
         if (mounted) setThreads(res);
       } catch (e) {
         // ignore

@@ -32,10 +32,10 @@ export default function Welcome() {
             Create Account
           </button>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/products")}
             className="w-full py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
           >
-            Browse as Guest
+            Browse Products
           </button>
         </div>
 

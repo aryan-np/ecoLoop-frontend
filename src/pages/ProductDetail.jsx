@@ -92,20 +92,11 @@ export default function ProductDetail() {
   }, [user, normalized]);
 
   const toggleFavorite = () => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
     setIsFavorite((p) => !p);
-    // TODO: call favorite endpoint when available
+    // TODO: call favorite endpoint when available - will trigger 401 modal if unauthorized
   };
 
   const handleMessageSeller = async () => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-
     if (messagingLoading) return;
     
     setMessagingLoading(true);
@@ -138,7 +129,10 @@ export default function ProductDetail() {
       });
     } catch (err) {
       console.error("Error creating message thread:", err);
-      alert("Failed to send message. Please try again.");
+      // Don't show alert for unauthorized errors - the global modal will handle it
+      if (!err?.isUnauthorized) {
+        alert("Failed to send message. Please try again.");
+      }
     } finally {
       setMessagingLoading(false);
     }

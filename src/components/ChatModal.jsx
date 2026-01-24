@@ -16,7 +16,7 @@ export default function ChatModal({ thread, onClose }) {
     async function load() {
       setLoading(true);
       try {
-        const res = await getMessages(access, thread.id);
+        const res = await getMessages(thread.id);
         if (mounted) {
           setMessages(res.results ? res.results.slice().reverse() : []);
         }

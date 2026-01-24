@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import React, { useContext, useState, useEffect } from "react";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -9,11 +9,12 @@ import { AuthProvider } from "./auth/AuthProvider";
 import AuthContext from "./auth/AuthProvider";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+import UnauthorizedModal from "./components/UnauthorizedModal";
+import { onUnauthorized } from "./api/client";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import ProductForm from "./pages/ProductForm";
 import MyListings from "./pages/MyListings";
-import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
 
@@ -28,7 +29,15 @@ export default function App() {
 function InnerApp() {
   const { isAuthenticated } = useContext(AuthContext);
   const location = useLocation();
+  const [showUnauthorized, setShowUnauthorized] = useState(false);
   const hideNavBar = ['/register', '/login', '/verify-otp'].includes(location.pathname);
+
+  useEffect(() => {
+    const unsubscribe = onUnauthorized(() => {
+      setShowUnauthorized(true);
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -56,15 +65,26 @@ function InnerApp() {
       ) : (
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Welcome />} />
+            <Route path="/" element={<Navigate to="/products" replace />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/new" element={<ProductForm />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/products/:id/edit" element={<ProductForm />} />
+            <Route path="/seller/:userId" element={<SellerProfile />} />
           </Routes>
         </main>
       )}
 
       <Footer />
+      
+      {/* Unauthorized Modal - Only shows when action requires auth */}
+      <UnauthorizedModal 
+        isOpen={showUnauthorized} 
+        onClose={() => setShowUnauthorized(false)} 
+      />
     </div>
   );
 }

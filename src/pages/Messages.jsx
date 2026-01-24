@@ -34,7 +34,7 @@ export default function Messages() {
     async function load() {
       setThreadsLoading(true);
       try {
-        const res = await getThreads(access);
+        const res = await getThreads();
         if (mounted) {
           setThreads(res);
           
@@ -65,7 +65,7 @@ export default function Messages() {
       if (!selectedThread) return;
       setLoading(true);
       try {
-        const res = await getMessages(access, selectedThread.id);
+        const res = await getMessages(selectedThread.id);
         if (mounted) {
           setMessages(res.results ? res.results.slice().reverse() : []);
           // Scroll to bottom after messages load
@@ -143,7 +143,7 @@ export default function Messages() {
             setMessages((m) => [...m, msg]);
             
             // Refresh threads to update last message
-            getThreads(access).then((res) => setThreads(res)).catch(console.error);
+            getThreads().then((res) => setThreads(res)).catch(console.error);
           }
         } catch (err) {
           console.error("WebSocket parse error:", err);

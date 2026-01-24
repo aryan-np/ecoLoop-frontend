@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import productAPI from "../api/product";
 import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
+import UnauthorizedModal from "../components/UnauthorizedModal";
+import apiClient from "../api/client";
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -25,6 +27,7 @@ export default function ProductForm() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showUnauthorized, setShowUnauthorized] = useState(!access);
 
   /* Load categories & conditions */
   useEffect(() => {
@@ -157,7 +160,14 @@ export default function ProductForm() {
   };
 
   if (!access) {
-    return <div className="max-w-2xl mx-auto p-6">Please login to create or edit a product.</div>;
+    return (
+      <>
+        <UnauthorizedModal 
+          isOpen={showUnauthorized} 
+          onClose={() => setShowUnauthorized(false)} 
+        />
+      </>
+    );
   }
 
   return (

@@ -2,6 +2,20 @@ import tokenService from "../auth/tokenService";
 
 const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+// Create an event emitter for 401 errors
+const unauthorizedListeners = [];
+
+export const onUnauthorized = (callback) => {
+  unauthorizedListeners.push(callback);
+  return () => {
+    unauthorizedListeners.splice(unauthorizedListeners.indexOf(callback), 1);
+  };
+};
+
+const emitUnauthorized = () => {
+  unauthorizedListeners.forEach(callback => callback());
+};
+
 async function _doFetch(url, options) {
   const res = await fetch(url, options);
   const json = await res.json().catch(() => null);
@@ -39,6 +53,13 @@ async function apiClient(path, { method = "GET", body, headers = {} } = {}) {
     if (newAccess) {
       options.headers = { ...options.headers, Authorization: `Bearer ${newAccess}` };
       ({ res, json } = await _doFetch(url, options));
+    } else {
+      // Refresh failed, emit unauthorized event
+      emitUnauthorized();
+      const error = new Error("You must be logged in to perform this action");
+      error.isUnauthorized = true;
+      error.status = 401;
+      throw error;
     }
   }
 

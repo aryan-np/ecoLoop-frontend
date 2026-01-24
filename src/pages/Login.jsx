@@ -142,10 +142,10 @@ export default function Login() {
           </p>
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/products")}
             className="text-gray-600 hover:text-green-600 mt-3 font-semibold"
           >
-            ← Back to Login
+            ← Browse Products
           </button>
         </div>
       </div>

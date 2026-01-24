@@ -1,58 +1,37 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import apiClient from "./client";
 
-export async function getThreads(token) {
-  const res = await fetch(`${BASE}/api/communications/threads/`, {
-    headers: { Authorization: token ? `Bearer ${token}` : "" },
-  });
-  const json = await res.json();
-  if (!res.ok) throw json;
-  return json.Result || [];
+export async function getThreads() {
+  const result = await apiClient("/api/communications/threads/", { method: "GET" });
+  return result?.Result || [];
 }
 
-export async function getMessages(token, threadId, page = null) {
-  const url = new URL(`${BASE}/api/communications/messages`);
-  url.searchParams.set("thread_id", threadId);
-  if (page) url.searchParams.set("page", page);
+export async function getMessages(threadId, page = null) {
+  let url = `/api/communications/messages?thread_id=${threadId}`;
+  if (page) url += `&page=${page}`;
 
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: token ? `Bearer ${token}` : "" },
-  });
-  const json = await res.json();
-  if (!res.ok) throw json;
-  return json.Result || { results: [], count: 0 };
+  const result = await apiClient(url, { method: "GET" });
+  return result?.Result || { results: [], count: 0 };
 }
 
 export async function createThreadAndSendMessage(token, recipientId, message, productId = null) {
-  const res = await fetch(`${BASE}/api/communications/threads/`, {
+  const result = await apiClient("/api/communications/threads/", {
     method: "POST",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+    body: {
       user2: recipientId,
       message: message,
       product: productId,
-    }),
+    },
   });
-  const json = await res.json();
-  if (!res.ok) throw json;
-  return json.Result || json;
+  return result?.Result || result;
 }
 
-export async function sendMessage(token, threadId, message) {
-  const res = await fetch(`${BASE}/api/communications/messages/`, {
+export async function sendMessage(threadId, message) {
+  const result = await apiClient("/api/communications/messages/", {
     method: "POST",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+    body: {
       thread_id: threadId,
       message: message,
-    }),
+    },
   });
-  const json = await res.json();
-  if (!res.ok) throw json;
-  return json.Result || json;
+  return result?.Result || result;
 }
