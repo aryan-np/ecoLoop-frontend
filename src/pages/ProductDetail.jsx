@@ -290,14 +290,17 @@ export default function ProductDetail() {
           </div>
 
           {/* Seller info card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div 
+            onClick={() => normalized.owner_id && navigate(`/seller/${normalized.owner_id}`)}
+            className="bg-white rounded-xl border border-gray-200 p-6 cursor-pointer hover:shadow-lg hover:border-green-300 transition-all"
+          >
             <h2 className="text-base font-semibold text-gray-900">Seller Information</h2>
-            <div className="mt-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">
+            <div className="mt-3 flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold group-hover:bg-green-200 transition-colors">
                 {normalized.owner_name?.[0]?.toUpperCase() || "U"}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">{normalized.owner_name}</p>
+                <p className="text-sm font-semibold text-gray-900 group-hover:text-green-600 transition-colors">{normalized.owner_name}</p>
                 <p className="text-xs text-gray-500">Verified Seller</p>
               </div>
             </div>

@@ -4,6 +4,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
 import Profile from "./pages/Profile";
+import SellerProfile from "./pages/SellerProfile";
 import { AuthProvider } from "./auth/AuthProvider";
 import AuthContext from "./auth/AuthProvider";
 import NavBar from "./components/NavBar";
@@ -48,6 +49,7 @@ function InnerApp() {
               <Route path="/products/new" element={<ProductForm />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/products/:id/edit" element={<ProductForm />} />
+              <Route path="/seller/:userId" element={<SellerProfile />} />
             </Routes>
           </main>
         </>

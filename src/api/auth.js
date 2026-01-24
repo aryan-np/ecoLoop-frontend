@@ -45,6 +45,9 @@ export const authAPI = {
       method: "PATCH", 
       body: data 
     }),
+
+  getUserProfileById: (userId) => 
+    apiClient(`/api/auth/user-profile/${userId}/`, { method: "GET" }),
 };
 
 export default authAPI;

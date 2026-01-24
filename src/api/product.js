@@ -56,6 +56,10 @@ export const productAPI = {
   // Get product conditions
   getConditions: () => 
     apiClient("/api/product/conditions/", { method: "GET" }),
+
+  // Get specific user's listings
+  getUserListings: (userId) => 
+    apiClient(`/api/product/${userId}/products/`, { method: "GET" }),
 };
 
 export default productAPI;
