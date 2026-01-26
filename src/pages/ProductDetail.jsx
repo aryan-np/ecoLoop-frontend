@@ -4,6 +4,7 @@ import productAPI from "../api/product";
 import { createThreadAndSendMessage } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
 import Alert from "../components/Alert";
+import ImageCarousel from "../components/ImageCarousel";
 
 function getName(v) {
   if (!v) return "";
@@ -175,17 +176,9 @@ export default function ProductDetail() {
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 auto-rows-max">
-        {/* Left: Image */}
+        {/* Left: Image Carousel */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-6">
-          <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
-            {normalized.image ? (
-              <img src={normalized.image} alt={normalized.title} className="w-full h-full object-contain p-4" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                No image available
-              </div>
-            )}
-          </div>
+          <ImageCarousel images={normalized.images || []} title={normalized.title} />
         </div>
 
         {/* Right: Main Card */}

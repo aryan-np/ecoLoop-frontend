@@ -135,7 +135,11 @@ export default function ProductForm() {
       fd.append("price", form.price);
       fd.append("location", form.location);
       fd.append("is_active", String(form.is_active));
-      if (form.image) fd.append("image", form.image);
+      
+      // Append multiple images as uploaded_images
+      images.forEach((img) => {
+        fd.append("uploaded_images", img);
+      });
 
       let resp;
       if (id) {
