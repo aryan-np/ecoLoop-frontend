@@ -59,7 +59,7 @@ export default function ProductCard({ product }) {
           <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
             <span className="font-semibold">{getString(product.condition) || "Good"}</span>
             <span>•</span>
-            <span>{getString(product.owner_name || product.owner_email)}</span>
+            <span>{getString(product.category)}</span>
           </div>
 
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">{getString(product.description) || "No description"}</p>

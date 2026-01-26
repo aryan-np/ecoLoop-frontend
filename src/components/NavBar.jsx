@@ -18,38 +18,40 @@ export default function NavBar() {
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex gap-8 items-center text-sm">
-          <NavLink to="/dashboard" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span className="hidden lg:inline">Impact</span>
-          </NavLink>
-          <NavLink to="/products" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <span className="hidden lg:inline">Browse</span>
-          </NavLink>
           {isAuthenticated && (
-            <NavLink to="/my-listings" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span className="hidden lg:inline">My Listings</span>
-            </NavLink>
+            <>
+              <NavLink to="/dashboard" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="hidden lg:inline">Impact</span>
+              </NavLink>
+              <NavLink to="/products" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <span className="hidden lg:inline">Browse</span>
+              </NavLink>
+              <NavLink to="/my-listings" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="hidden lg:inline">My Listings</span>
+              </NavLink>
+              <NavLink to="/messages" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span className="hidden lg:inline">Messages</span>
+              </NavLink>
+            </>
           )}
-          <NavLink to="/messages" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span className="hidden lg:inline">Messages</span>
-          </NavLink>
         </nav>
 
         {/* User actions */}
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <>
                 <NavLink
                   to="/profile"
@@ -69,6 +71,21 @@ export default function NavBar() {
                   </svg>
                   <span className="text-sm font-medium">Logout</span>
                 </button>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/login"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition text-gray-700 hover:text-green-600 font-medium"
+                >
+                  Log In
+                </NavLink>
+                <NavLink
+                  to="/register"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium"
+                >
+                  Sign Up
+                </NavLink>
               </>
             )}
           </div>
@@ -95,48 +112,57 @@ export default function NavBar() {
       {open && (
         <div className="md:hidden border-t border-gray-200 bg-white">
           <nav className="px-4 py-3 flex flex-col gap-2 text-sm">
-            <NavLink to="/dashboard" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>Impact</span>
-            </NavLink>
-            <NavLink to="/products" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <span>Browse</span>
-            </NavLink>
-            {isAuthenticated && (
-              <NavLink to="/my-listings" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>My Listings</span>
-              </NavLink>
-            )}
-            <NavLink to="/messages" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span>Messages</span>
-            </NavLink>
-            <NavLink to="/profile" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>Profile</span>
-            </NavLink>
-            {isAuthenticated && (
-              <button
-                onClick={() => { setOpen(false); logout(); }}
-                className="flex items-center gap-3 py-2 px-3 text-gray-700 hover:text-green-600 rounded-lg transition"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
-              </button>
+            {isAuthenticated ? (
+              <>
+                <NavLink to="/dashboard" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Impact</span>
+                </NavLink>
+                <NavLink to="/products" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span>Browse</span>
+                </NavLink>
+                <NavLink to="/my-listings" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>My Listings</span>
+                </NavLink>
+                <NavLink to="/messages" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>Messages</span>
+                </NavLink>
+                <NavLink to="/profile" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Profile</span>
+                </NavLink>
+                <button
+                  onClick={() => { setOpen(false); logout(); }}
+                  className="flex items-center gap-3 py-2 px-3 text-gray-700 hover:text-green-600 rounded-lg transition"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/login" onClick={() => setOpen(false)} className="flex items-center justify-center gap-2 py-2 px-4 text-gray-700 hover:text-green-600 font-medium rounded-lg transition">
+                  Log In
+                </NavLink>
+                <NavLink to="/register" onClick={() => setOpen(false)} className="flex items-center justify-center gap-2 py-2 px-4 bg-green-600 text-white hover:bg-green-700 font-medium rounded-lg transition">
+                  Sign Up
+                </NavLink>
+              </>
             )}
           </nav>
         </div>

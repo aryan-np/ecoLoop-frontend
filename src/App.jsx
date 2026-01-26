@@ -41,29 +41,29 @@ function InnerApp() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Show NavBar for everyone except on auth pages */}
+      {!hideNavBar && <NavBar />}
+      
       {isAuthenticated ? (
-        <>
-          {!hideNavBar && <NavBar />}
-          <main className={hideNavBar ? "flex-grow min-h-screen" : "flex-grow container mx-auto px-4 py-8 min-h-screen"}>
-            <Routes>
-              <Route path="/" element={<Products />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/verify-otp" element={<VerifyOTP />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/my-listings" element={<MyListings />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/new" element={<ProductForm />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/products/:id/edit" element={<ProductForm />} />
-              <Route path="/seller/:userId" element={<SellerProfile />} />
-            </Routes>
-          </main>
-        </>
+        <main className={hideNavBar ? "flex-grow min-h-screen" : "flex-grow container mx-auto px-4 py-8 min-h-screen"}>
+          <Routes>
+            <Route path="/" element={<Products />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/verify-otp" element={<VerifyOTP />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-listings" element={<MyListings />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/new" element={<ProductForm />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/products/:id/edit" element={<ProductForm />} />
+            <Route path="/seller/:userId" element={<SellerProfile />} />
+          </Routes>
+        </main>
       ) : (
-        <main className="flex-grow">
+        <main className={hideNavBar ? "flex-grow min-h-screen" : "flex-grow container mx-auto px-4 py-8 min-h-screen"}>
           <Routes>
             <Route path="/" element={<Navigate to="/products" replace />} />
             <Route path="/register" element={<Register />} />

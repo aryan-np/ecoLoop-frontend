@@ -29,6 +29,13 @@ export default function ProductForm() {
   const [toast, setToast] = useState(null);
   const [showUnauthorized, setShowUnauthorized] = useState(!access);
 
+  // Redirect guest users when they cancel the unauthorized modal
+  useEffect(() => {
+    if (!access && !showUnauthorized) {
+      navigate(-1);
+    }
+  }, [access, showUnauthorized, navigate]);
+
   /* Load categories & conditions */
   useEffect(() => {
     const loadMeta = async () => {
@@ -38,8 +45,8 @@ export default function ProductForm() {
           productAPI.getConditions(),
         ]);
 
-        setCategories(Array.isArray(cResp?.results) ? cResp.results : []);
-        setConditions(Array.isArray(condResp?.results) ? condResp.results : []);
+        setCategories(Array.isArray(cResp?.Result) ? cResp.Result : []);
+        setConditions(Array.isArray(condResp?.Result) ? condResp.Result : []);
       } catch (err) {
         setToast({ type: "error", message: "Failed to load categories or conditions" });
       }

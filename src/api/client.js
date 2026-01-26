@@ -48,7 +48,14 @@ async function apiClient(path, { method = "GET", body, headers = {} } = {}) {
   let { res, json } = await _doFetch(url, options);
 
   // If unauthorized, try to refresh access once and retry
-  if (res.status === 401) {
+  // BUT skip auth refresh for login/register endpoints - those endpoints 
+  // return 401 for invalid credentials, not for missing auth
+  const isAuthEndpoint = path.includes('/auth/login') || 
+                         path.includes('/auth/register') || 
+                         path.includes('/auth/verify-otp') ||
+                         path.includes('/auth/request-otp');
+
+  if (res.status === 401 && !isAuthEndpoint) {
     const newAccess = await tokenService.refreshAccess();
     if (newAccess) {
       options.headers = { ...options.headers, Authorization: `Bearer ${newAccess}` };
