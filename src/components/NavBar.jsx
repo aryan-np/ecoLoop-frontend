@@ -20,7 +20,7 @@ export default function NavBar() {
         <nav className="hidden md:flex gap-8 items-center text-sm">
           {isAuthenticated && (
             <>
-              <NavLink to="/dashboard" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+              <NavLink to="/impact" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
@@ -114,7 +114,7 @@ export default function NavBar() {
           <nav className="px-4 py-3 flex flex-col gap-2 text-sm">
             {isAuthenticated ? (
               <>
-                <NavLink to="/dashboard" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                <NavLink to="/impact" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>

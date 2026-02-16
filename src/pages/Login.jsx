@@ -30,8 +30,17 @@ export default function Login() {
       if (resp.IsSuccess) {
         if (resp.Result?.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });
-          // Navigate immediately to dashboard - toast will show there
-          navigate("/dashboard", { state: { loginSuccess: true } });
+          
+          // Check if user has ADMIN role
+          const userRoles = resp.Result.user?.roles || [];
+          const isAdmin = userRoles.some(role => role.name === 'ADMIN');
+          
+          // Redirect to admin panel if user is admin, otherwise to dashboard
+          if (isAdmin) {
+            navigate("/admin/dashboard", { state: { loginSuccess: true } });
+          } else {
+            navigate("/dashboard", { state: { loginSuccess: true } });
+          }
         }
       } else {
         const errorMsg = Array.isArray(resp.ErrorMessage) ? resp.ErrorMessage.join("; ") : JSON.stringify(resp.ErrorMessage);

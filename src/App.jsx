@@ -17,6 +17,18 @@ import ProductForm from "./pages/ProductForm";
 import MyListings from "./pages/MyListings";
 import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
+import Impact from "./pages/Impact";
+import RecycleScrap from "./pages/RecycleScrap";
+import ScrapRequestForm from "./pages/ScrapRequestForm";
+import DonateItems from "./pages/DonateItems";
+import DonationForm from "./pages/DonationForm";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import Verifications from "./pages/admin/Verifications";
+import DisputesReports from "./pages/admin/DisputesReports";
+import SystemLogs from "./pages/admin/SystemLogs";
+import Settings from "./pages/admin/Settings";
 
 export default function App() {
   return (
@@ -30,7 +42,7 @@ function InnerApp() {
   const { isAuthenticated } = useContext(AuthContext);
   const location = useLocation();
   const [showUnauthorized, setShowUnauthorized] = useState(false);
-  const hideNavBar = ['/register', '/login', '/verify-otp'].includes(location.pathname);
+  const hideNavBar = ['/register', '/login', '/verify-otp'].includes(location.pathname) || location.pathname.startsWith('/admin');
 
   useEffect(() => {
     const unsubscribe = onUnauthorized(() => {
@@ -41,7 +53,7 @@ function InnerApp() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Show NavBar for everyone except on auth pages */}
+      {/* Show NavBar for everyone except on auth pages and admin pages */}
       {!hideNavBar && <NavBar />}
       
       {isAuthenticated ? (
@@ -55,11 +67,26 @@ function InnerApp() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-listings" element={<MyListings />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/impact" element={<Impact />} />
+            <Route path="/recycle" element={<RecycleScrap />} />
+            <Route path="/recycle/submit" element={<ScrapRequestForm />} />
+            <Route path="/donate" element={<DonateItems />} />
+            <Route path="/donate/form" element={<DonationForm />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/new" element={<ProductForm />} />
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/products/:id/edit" element={<ProductForm />} />
             <Route path="/seller/:userId" element={<SellerProfile />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="verifications" element={<Verifications />} />
+              <Route path="disputes" element={<DisputesReports />} />
+              <Route path="logs" element={<SystemLogs />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
           </Routes>
         </main>
       ) : (
@@ -74,11 +101,16 @@ function InnerApp() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/products/:id/edit" element={<ProductForm />} />
             <Route path="/seller/:userId" element={<SellerProfile />} />
+            <Route path="/recycle" element={<RecycleScrap />} />
+            <Route path="/recycle/submit" element={<ScrapRequestForm />} />
+            <Route path="/donate" element={<DonateItems />} />
+            <Route path="/donate/form" element={<DonationForm />} />
           </Routes>
         </main>
       )}
 
-      <Footer />
+      {/* Hide Footer on admin pages */}
+      {!location.pathname.startsWith('/admin') && <Footer />}
       
       {/* Unauthorized Modal - Only shows when action requires auth */}
       <UnauthorizedModal 

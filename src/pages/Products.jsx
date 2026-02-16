@@ -169,7 +169,7 @@ export default function Products() {
         </button>
         
         <button 
-          onClick={() => { setActiveTab("donate"); productsRef.current?.scrollIntoView({ behavior: "smooth" }); }}
+          onClick={() => navigate('/donate')}
           className={`rounded-lg border p-4 text-center hover:shadow-md transition ${
             activeTab === "donate" 
               ? "bg-gradient-to-br from-purple-100 to-purple-200 border-purple-400" 
@@ -186,7 +186,7 @@ export default function Products() {
         </button>
         
         <button 
-          onClick={() => { setActiveTab("recycle"); productsRef.current?.scrollIntoView({ behavior: "smooth" }); }}
+          onClick={() => navigate('/recycle')}
           className={`rounded-lg border p-4 text-center hover:shadow-md transition ${
             activeTab === "recycle" 
               ? "bg-gradient-to-br from-teal-100 to-teal-200 border-teal-400" 
