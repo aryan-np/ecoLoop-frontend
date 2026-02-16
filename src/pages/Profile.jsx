@@ -1,10 +1,12 @@
 import React, { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthProvider";
 import authAPI from "../api/auth";
 import apiClient from "../api/client";
 import Toast from "../components/Toast";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -275,10 +277,29 @@ export default function Profile() {
               </div>
 
               <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold mb-2">Role</p>
-                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg">
-                  Buyer
-                </span>
+                <p className="text-xs text-gray-500 uppercase font-semibold mb-2">Role{profile.roles && profile.roles.length > 1 ? 's' : ''}</p>
+                <div className="flex flex-wrap gap-2">
+                  {profile.roles && profile.roles.length > 0 ? (
+                    profile.roles.map((role) => {
+                      const roleColors = {
+                        USER: 'bg-blue-100 text-blue-700',
+                        ADMIN: 'bg-purple-100 text-purple-700',
+                        NGO: 'bg-green-100 text-green-700',
+                        Recycler: 'bg-teal-100 text-teal-700',
+                      };
+                      const colorClass = roleColors[role.name] || 'bg-gray-100 text-gray-700';
+                      return (
+                        <span key={role.id} className={`inline-block px-3 py-1 text-sm font-semibold rounded-lg ${colorClass}`}>
+                          {role.name}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg">
+                      USER
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -288,22 +309,56 @@ export default function Profile() {
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Verification Status</h2>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                profile.is_email_verified
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-yellow-50 border-yellow-200'
+              }`}>
                 <span className="text-gray-900 font-medium">Email Verification</span>
-                <span className="text-green-600 font-semibold flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                  </svg>
-                  Verified
+                <span className={`font-semibold flex items-center gap-1 ${
+                  profile.is_email_verified ? 'text-green-600' : 'text-yellow-600'
+                }`}>
+                  {profile.is_email_verified ? (
+                    <>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                      </svg>
+                      Verified
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                      </svg>
+                      Not Verified
+                    </>
+                  )}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                profile.is_phone_verified
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-yellow-50 border-yellow-200'
+              }`}>
                 <span className="text-gray-900 font-medium">Phone Verification</span>
-                <span className="text-green-600 font-semibold flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                  </svg>
-                  Verified
+                <span className={`font-semibold flex items-center gap-1 ${
+                  profile.is_phone_verified ? 'text-green-600' : 'text-yellow-600'
+                }`}>
+                  {profile.is_phone_verified ? (
+                    <>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                      </svg>
+                      Verified
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                      </svg>
+                      Not Verified
+                    </>
+                  )}
                 </span>
               </div>
             </div>
@@ -313,17 +368,20 @@ export default function Profile() {
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
             <div className="space-y-2">
-              <button className="w-full text-left px-4 py-3 text-gray-900 font-medium hover:bg-gray-50 rounded-lg transition flex items-center gap-2">
-                <span>📋</span> My Listings
+              <button 
+                onClick={() => navigate("/my-reports")}
+                className="w-full text-left px-4 py-3 text-gray-900 font-medium hover:bg-gray-50 rounded-lg transition flex items-center gap-2"
+              >
+                <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
+                </svg>
+                My Reports
               </button>
             </div>
           </div>
 
-          {/* Security Settings & Logout */}
+          {/* Logout */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <button className="w-full text-center px-4 py-3 text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition mb-3">
-              🔒 Security Settings
-            </button>
             <button
               onClick={logout}
               className="w-full text-center px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"

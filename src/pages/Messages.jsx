@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getThreads, getMessages } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
+import ReportModal from "../components/ReportModal";
 
 const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -24,6 +25,7 @@ export default function Messages() {
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
   const [threadsLoading, setThreadsLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const wsRef = useRef(null);
   const listRef = useRef(null);
   const textInputRef = useRef(null);
@@ -265,6 +267,16 @@ export default function Messages() {
                   </button>
                 )}
               </div>
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border transition hover:bg-red-50 hover:border-red-300"
+                style={{borderColor: 'var(--border)', color: 'var(--text-secondary)'}}
+                title="Report this conversation"
+              >
+                <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
 
             <div ref={listRef} className="flex-1 overflow-y-auto p-6 space-y-4 min-h-80" style={{backgroundColor: 'var(--section)'}}>
@@ -324,6 +336,16 @@ export default function Messages() {
           </div>
         )}
       </div>
+
+      {/* Report Modal */}
+      {selectedThread && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          conversationId={selectedThread.id}
+          category="message"
+        />
+      )}
     </div>
   );
 }

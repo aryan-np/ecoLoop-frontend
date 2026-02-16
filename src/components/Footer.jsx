@@ -27,7 +27,7 @@ export default function Footer() {
               <li><a href="/" className="hover:text-green-400 transition">Home</a></li>
               <li><a href="/products" className="hover:text-green-400 transition">Browse Products</a></li>
               <li><a href="/products/new" className="hover:text-green-400 transition">Sell Item</a></li>
-              <li><a href="/dashboard" className="hover:text-green-400 transition">Dashboard</a></li>
+              <li><a href="/impact" className="hover:text-green-400 transition">Impact</a></li>
             </ul>
           </div>
 

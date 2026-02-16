@@ -24,7 +24,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const data = await adminAPI.getUsers(filters);
+      const data = await adminAPI.getUsers();
       setUsers(data);
     } catch (error) {
       setToast({ type: 'error', message: 'Failed to load users' });
@@ -32,6 +32,41 @@ export default function UserManagement() {
       setLoading(false);
     }
   };
+
+  // Apply filters client-side for instant feedback
+  const filteredUsers = users.filter((user) => {
+    // Search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesName = user.full_name?.toLowerCase().includes(searchLower);
+      const matchesEmail = user.email?.toLowerCase().includes(searchLower);
+      const matchesPhone = user.phone_number?.toLowerCase().includes(searchLower);
+      
+      if (!matchesName && !matchesEmail && !matchesPhone) {
+        return false;
+      }
+    }
+
+    // Role filter
+    if (filters.role) {
+      const userRoles = user.roles || [];
+      const hasRole = userRoles.some(role => 
+        role.name && role.name.toUpperCase() === filters.role.toUpperCase()
+      );
+      if (!hasRole) {
+        return false;
+      }
+    }
+
+    // Status filter
+    if (filters.status) {
+      const isActive = user.is_active !== false;
+      if (filters.status === 'active' && !isActive) return false;
+      if (filters.status === 'blocked' && isActive) return false;
+    }
+
+    return true;
+  });
 
   const handleSearch = (e) => {
     setFilters({ ...filters, search: e.target.value });
@@ -82,12 +117,9 @@ export default function UserManagement() {
   const getRoleBadgeColor = (role) => {
     const colors = {
       USER: 'bg-blue-100 text-blue-700',
-      Seller: 'bg-blue-100 text-blue-700',
-      Buyer: 'bg-blue-100 text-blue-700',
+      ADMIN: 'bg-purple-100 text-purple-700',
       NGO: 'bg-green-100 text-green-700',
       Recycler: 'bg-teal-100 text-teal-700',
-      ADMIN: 'bg-purple-100 text-purple-700',
-      Admin: 'bg-purple-100 text-purple-700'
     };
     return colors[role] || 'bg-gray-100 text-gray-700';
   };
@@ -160,10 +192,8 @@ export default function UserManagement() {
           >
             <option value="">All Roles</option>
             <option value="USER">User</option>
-            <option value="Seller">Seller</option>
-            <option value="Buyer">Buyer</option>
-            <option value="NGO">NGO</option>
             <option value="Recycler">Recycler</option>
+            <option value="NGO">NGO</option>
             <option value="ADMIN">Admin</option>
           </select>
 
@@ -174,17 +204,14 @@ export default function UserManagement() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
             <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Blocked">Blocked</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
           </select>
-
-          {/* Apply Filters Button */}
-          <button
-            onClick={loadUsers}
-            className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium"
-          >
-            Apply Filters
-          </button>
+        </div>
+        
+        {/* Results count */}
+        <div className="mt-4 text-sm text-gray-600">
+          Showing {filteredUsers.length} of {users.length} users
         </div>
       </div>
 
@@ -202,14 +229,14 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                  No users found
+                  {users.length === 0 ? 'No users found' : 'No users match the selected filters'}
                 </td>
               </tr>
             ) : (
-              users.map((user, index) => (
+              filteredUsers.map((user, index) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition">
                   {/* User */}
                   <td className="px-6 py-4">
@@ -239,13 +266,24 @@ export default function UserManagement() {
 
                   {/* Role */}
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleBadgeColor(
-                        user.roles?.[0]?.name || 'User'
-                      )}`}
-                    >
-                      {user.roles?.[0]?.name || 'User'}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {user.roles && user.roles.length > 0 ? (
+                        user.roles.map((role) => (
+                          <span
+                            key={role.id}
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                              role.name
+                            )}`}
+                          >
+                            {role.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                          USER
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Listings */}
@@ -422,9 +460,7 @@ export default function UserManagement() {
                         selectedUser.roles.map((role) => (
                           <span
                             key={role.id}
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              role.name === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                            }`}
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleBadgeColor(role.name)}`}
                           >
                             {role.name}
                           </span>

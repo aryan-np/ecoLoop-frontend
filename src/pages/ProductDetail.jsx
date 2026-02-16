@@ -5,6 +5,7 @@ import { createThreadAndSendMessage } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
 import Alert from "../components/Alert";
 import ImageCarousel from "../components/ImageCarousel";
+import ReportModal from "../components/ReportModal";
 
 function getName(v) {
   if (!v) return "";
@@ -38,6 +39,7 @@ export default function ProductDetail() {
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [messagingLoading, setMessagingLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // Scroll to top when product ID changes
   useEffect(() => {
@@ -294,11 +296,24 @@ export default function ProductDetail() {
           </div>
 
           {/* Report */}
-          <button className="text-sm text-gray-500 hover:text-gray-800">
+          <button 
+            onClick={() => setShowReportModal(true)}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
+            </svg>
             Report this listing
           </button>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal 
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        listingId={id}
+      />
     </main>
   );
 }

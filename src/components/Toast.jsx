@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 
-export default function Toast({ message, type = "success", duration = 3000 }) {
+export default function Toast({ message, type = "success", duration = 3000, onClose }) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(false), duration);
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+      if (onClose) onClose();
+    }, duration);
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, onClose]);
 
   if (!isVisible) return null;
 

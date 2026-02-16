@@ -39,7 +39,7 @@ export default function VerifyOTP() {
       if (resp.IsSuccess) {
         if (resp.Result && resp.Result.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });
-          navigate("/dashboard", { replace: true });
+          navigate("/impact", { replace: true });
         } else {
           setMessage({ type: "success", text: resp.Result?.message || "OTP verified successfully" });
           // For registration, redirect to login

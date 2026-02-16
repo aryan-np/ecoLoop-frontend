@@ -15,7 +15,7 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import ProductForm from "./pages/ProductForm";
 import MyListings from "./pages/MyListings";
-import Dashboard from "./pages/Dashboard";
+import MyReports from "./pages/MyReports";
 import Messages from "./pages/Messages";
 import Impact from "./pages/Impact";
 import RecycleScrap from "./pages/RecycleScrap";
@@ -63,9 +63,9 @@ function InnerApp() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-listings" element={<MyListings />} />
+            <Route path="/my-reports" element={<MyReports />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/impact" element={<Impact />} />
             <Route path="/recycle" element={<RecycleScrap />} />

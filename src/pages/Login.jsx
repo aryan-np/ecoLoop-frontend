@@ -35,15 +35,25 @@ export default function Login() {
           const userRoles = resp.Result.user?.roles || [];
           const isAdmin = userRoles.some(role => role.name === 'ADMIN');
           
-          // Redirect to admin panel if user is admin, otherwise to dashboard
+          // Redirect to admin panel if user is admin, otherwise to impact page
           if (isAdmin) {
             navigate("/admin/dashboard", { state: { loginSuccess: true } });
           } else {
-            navigate("/dashboard", { state: { loginSuccess: true } });
+            navigate("/impact", { state: { loginSuccess: true } });
           }
         }
       } else {
-        const errorMsg = Array.isArray(resp.ErrorMessage) ? resp.ErrorMessage.join("; ") : JSON.stringify(resp.ErrorMessage);
+        // Handle nested error message structure
+        let errorMsg = "Login failed";
+        if (resp.ErrorMessage?.message && Array.isArray(resp.ErrorMessage.message)) {
+          errorMsg = resp.ErrorMessage.message.join("; ");
+        } else if (Array.isArray(resp.ErrorMessage)) {
+          errorMsg = resp.ErrorMessage.join("; ");
+        } else if (typeof resp.ErrorMessage === 'string') {
+          errorMsg = resp.ErrorMessage;
+        } else if (resp.ErrorMessage) {
+          errorMsg = JSON.stringify(resp.ErrorMessage);
+        }
         setToast({ type: "error", message: errorMsg });
       }
     } catch (err) {
@@ -66,7 +76,17 @@ export default function Login() {
         setToast({ type: "info", message: "OTP sent! Check your email..." });
         setTimeout(() => navigate("/verify-otp", { state: { email: form.email, purpose: "LOGIN" } }), 1500);
       } else {
-        const errorMsg = Array.isArray(resp.ErrorMessage) ? resp.ErrorMessage.join("; ") : JSON.stringify(resp.ErrorMessage);
+        // Handle nested error message structure
+        let errorMsg = "Failed to send OTP";
+        if (resp.ErrorMessage?.message && Array.isArray(resp.ErrorMessage.message)) {
+          errorMsg = resp.ErrorMessage.message.join("; ");
+        } else if (Array.isArray(resp.ErrorMessage)) {
+          errorMsg = resp.ErrorMessage.join("; ");
+        } else if (typeof resp.ErrorMessage === 'string') {
+          errorMsg = resp.ErrorMessage;
+        } else if (resp.ErrorMessage) {
+          errorMsg = JSON.stringify(resp.ErrorMessage);
+        }
         setToast({ type: "error", message: errorMsg });
       }
     } catch (err) {
@@ -159,7 +179,7 @@ export default function Login() {
         </div>
       </div>
 
-      {toast && <Toast type={toast.type} message={toast.message} duration={2000} />}
+      {toast && <Toast type={toast.type} message={toast.message} duration={2000} onClose={() => setToast(null)} />}
     </div>
   );
 }
