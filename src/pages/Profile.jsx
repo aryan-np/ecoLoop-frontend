@@ -157,6 +157,31 @@ export default function Profile() {
     }
   };
 
+  // Check if user already has Recycler or NGO role
+  const hasRecyclerRole = profile?.roles?.some(role => role.name === "RECYCLER");
+  const hasNGORole = profile?.roles?.some(role => role.name === "NGO");
+  
+  // Use API flags for application status
+  const canApplyRecycler = profile?.can_apply_recycler ?? false;
+  const canApplyNGO = profile?.can_apply_ngo ?? false;
+  const hasAppliedRecycler = profile?.has_applied_recycler ?? false;
+  const hasAppliedNGO = profile?.has_applied_ngo ?? false;
+  
+  // Show application section if user doesn't have roles AND hasn't been rejected (can still apply)
+  const showApplicationSection = !hasRecyclerRole && !hasNGORole && (canApplyRecycler || canApplyNGO || hasAppliedRecycler || hasAppliedNGO);
+
+  const handleApplyClick = (type) => {
+    const hasApplied = type === "recycler" ? hasAppliedRecycler : hasAppliedNGO;
+    
+    if (hasApplied) {
+      // If already applied, go to application status page
+      navigate("/application-status");
+    } else {
+      // Otherwise, go to application form
+      navigate(`/verification-application/${type}`);
+    }
+  };
+
   const handleDiscard = () => {
     setFormData(profile);
     setIsEditing(false);
@@ -285,7 +310,7 @@ export default function Profile() {
                         USER: 'bg-blue-100 text-blue-700',
                         ADMIN: 'bg-purple-100 text-purple-700',
                         NGO: 'bg-green-100 text-green-700',
-                        Recycler: 'bg-teal-100 text-teal-700',
+                        RECYCLER: 'bg-teal-100 text-teal-700',
                       };
                       const colorClass = roleColors[role.name] || 'bg-gray-100 text-gray-700';
                       return (
@@ -363,6 +388,78 @@ export default function Profile() {
               </div>
             </div>
           </div>
+
+          {/* Apply for Verified Role */}
+          {showApplicationSection && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">Apply for Verified Role</h2>
+              <p className="text-gray-600 text-sm mb-6">Upgrade your account to become a verified Recycler or NGO</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Recycler Card */}
+                {(canApplyRecycler || hasAppliedRecycler) && (
+                  <div className="border border-gray-200 rounded-lg p-6 hover:border-green-400 hover:shadow-md transition">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21,11C21,16.55 17.16,21.74 12,23C6.84,21.74 3,16.55 3,11V5L12,1L21,5V11M12,21C15.75,20 19,15.54 19,11.22V6.3L12,3.18L5,6.3V11.22C5,15.54 8.25,20 12,21M15.05,16L11.97,14.15L8.9,16L9.71,12.5L7.13,10.16L10.76,9.85L11.97,6.5L13.18,9.84L16.81,10.15L14.23,12.5L15.05,16Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Become a Recycler</h3>
+                    <p className="text-gray-600 text-sm mb-4">Collect and process recyclable waste from users</p>
+                    {hasAppliedRecycler && (
+                      <div className="mb-3 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-xs text-orange-700 font-semibold">Application Pending Review</p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleApplyClick("recycler")}
+                      disabled={!canApplyRecycler && !hasAppliedRecycler}
+                      className={`w-full px-4 py-2.5 font-semibold rounded-lg transition ${
+                        hasAppliedRecycler
+                          ? "bg-orange-600 hover:bg-orange-700 text-white"
+                          : canApplyRecycler
+                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
+                    >
+                      {hasAppliedRecycler ? "View Application Status" : "Apply as Recycler"}
+                    </button>
+                  </div>
+                )}
+
+                {/* NGO Card */}
+                {(canApplyNGO || hasAppliedNGO) && (
+                  <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-md transition">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.03C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Become an NGO</h3>
+                    <p className="text-gray-600 text-sm mb-4">Receive donations and support communities</p>
+                    {hasAppliedNGO && (
+                      <div className="mb-3 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-xs text-orange-700 font-semibold">Application Pending Review</p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleApplyClick("ngo")}
+                      disabled={!canApplyNGO && !hasAppliedNGO}
+                      className={`w-full px-4 py-2.5 font-semibold rounded-lg transition ${
+                        hasAppliedNGO
+                          ? "bg-orange-600 hover:bg-orange-700 text-white"
+                          : canApplyNGO
+                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
+                    >
+                      {hasAppliedNGO ? "View Application Status" : "Apply as NGO"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Quick Links */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">

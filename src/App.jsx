@@ -22,13 +22,20 @@ import RecycleScrap from "./pages/RecycleScrap";
 import ScrapRequestForm from "./pages/ScrapRequestForm";
 import DonateItems from "./pages/DonateItems";
 import DonationForm from "./pages/DonationForm";
+import VerificationApplication from "./pages/VerificationApplication";
+import ApplicationStatus from "./pages/ApplicationStatus";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
-import Verifications from "./pages/admin/Verifications";
+import Applications from "./pages/admin/Verifications";
+import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import DisputesReports from "./pages/admin/DisputesReports";
 import SystemLogs from "./pages/admin/SystemLogs";
 import Settings from "./pages/admin/Settings";
+import NGOLayout from "./pages/ngo/NGOLayout";
+import NGODashboard from "./pages/ngo/NGODashboard";
+import RecyclerLayout from "./pages/recycler/RecyclerLayout";
+import RecyclerDashboard from "./pages/recycler/RecyclerDashboard";
 
 export default function App() {
   return (
@@ -42,7 +49,10 @@ function InnerApp() {
   const { isAuthenticated } = useContext(AuthContext);
   const location = useLocation();
   const [showUnauthorized, setShowUnauthorized] = useState(false);
-  const hideNavBar = ['/register', '/login', '/verify-otp'].includes(location.pathname) || location.pathname.startsWith('/admin');
+  const hideNavBar = ['/register', '/login', '/verify-otp'].includes(location.pathname) || 
+    location.pathname.startsWith('/admin') || 
+    location.pathname.startsWith('/ngo') || 
+    location.pathname.startsWith('/recycler');
 
   useEffect(() => {
     const unsubscribe = onUnauthorized(() => {
@@ -64,6 +74,8 @@ function InnerApp() {
             <Route path="/login" element={<Login />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/verification-application/:type" element={<VerificationApplication />} />
+            <Route path="/application-status" element={<ApplicationStatus />} />
             <Route path="/my-listings" element={<MyListings />} />
             <Route path="/my-reports" element={<MyReports />} />
             <Route path="/messages" element={<Messages />} />
@@ -82,10 +94,29 @@ function InnerApp() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="users" element={<UserManagement />} />
-              <Route path="verifications" element={<Verifications />} />
+              <Route path="verifications" element={<Applications />} />
+              <Route path="applications/:id" element={<ApplicationDetail />} />
               <Route path="disputes" element={<DisputesReports />} />
               <Route path="logs" element={<SystemLogs />} />
               <Route path="settings" element={<Settings />} />
+            </Route>
+
+            {/* NGO Routes */}
+            <Route path="/ngo" element={<NGOLayout />}>
+              <Route path="dashboard" element={<NGODashboard />} />
+              <Route path="donation-requests" element={<DonateItems />} />
+              <Route path="received-donations" element={<DonateItems />} />
+              <Route path="impact-report" element={<Impact />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
+
+            {/* Recycler Routes */}
+            <Route path="/recycler" element={<RecyclerLayout />}>
+              <Route path="dashboard" element={<RecyclerDashboard />} />
+              <Route path="scrap-requests" element={<RecycleScrap />} />
+              <Route path="pickup-schedule" element={<RecycleScrap />} />
+              <Route path="completed-pickups" element={<RecycleScrap />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
           </Routes>
         </main>
@@ -109,8 +140,11 @@ function InnerApp() {
         </main>
       )}
 
-      {/* Hide Footer on admin pages */}
-      {!location.pathname.startsWith('/admin') && <Footer />}
+      {/* Hide Footer on admin, NGO, and Recycler pages */}
+      {!location.pathname.startsWith('/admin') && 
+       !location.pathname.startsWith('/ngo') && 
+       !location.pathname.startsWith('/recycler') && 
+       <Footer />}
       
       {/* Unauthorized Modal - Only shows when action requires auth */}
       <UnauthorizedModal 

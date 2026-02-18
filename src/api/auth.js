@@ -48,6 +48,16 @@ export const authAPI = {
 
   getUserProfileById: (userId) => 
     apiClient(`/api/auth/user-profile/${userId}/`, { method: "GET" }),
+
+  // Role Applications
+  submitRoleApplication: (formData) => 
+    apiClient("/api/auth/role-applications/", { 
+      method: "POST", 
+      body: formData 
+    }),
+
+  getMyApplications: () => 
+    apiClient("/api/auth/role-applications/", { method: "GET" }),
 };
 
 export default authAPI;

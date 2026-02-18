@@ -110,6 +110,50 @@ const adminAPI = {
         total_transactions: 0
       };
     }
+  },
+
+  // Get role applications
+  getRoleApplications: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.role_type) params.append('role_type', filters.role_type);
+      if (filters.search) params.append('search', filters.search);
+      
+      const queryString = params.toString();
+      const url = `/api/auth/admin/role-applications/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiClient(url);
+      return response;
+    } catch (error) {
+      console.error('Error fetching role applications:', error);
+      throw error;
+    }
+  },
+
+  // Get single role application
+  getRoleApplication: async (applicationId) => {
+    try {
+      const response = await apiClient(`/api/auth/admin/role-applications/${applicationId}/`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching role application:', error);
+      throw error;
+    }
+  },
+
+  // Approve/Reject role application
+  reviewRoleApplication: async (applicationId, reviewData) => {
+    try {
+      const response = await apiClient(`/api/auth/admin/role-applications/${applicationId}/review/`, {
+        method: 'PATCH',
+        body: reviewData
+      });
+      return response;
+    } catch (error) {
+      console.error('Error reviewing role application:', error);
+      throw error;
+    }
   }
 };
 

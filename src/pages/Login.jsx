@@ -31,13 +31,19 @@ export default function Login() {
         if (resp.Result?.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });
           
-          // Check if user has ADMIN role
+          // Check user roles and redirect accordingly
           const userRoles = resp.Result.user?.roles || [];
           const isAdmin = userRoles.some(role => role.name === 'ADMIN');
+          const isNGO = userRoles.some(role => role.name === 'NGO');
+          const isRecycler = userRoles.some(role => role.name === 'RECYCLER');
           
-          // Redirect to admin panel if user is admin, otherwise to impact page
+          // Redirect based on role priority: Admin > NGO > Recycler > Regular User
           if (isAdmin) {
             navigate("/admin/dashboard", { state: { loginSuccess: true } });
+          } else if (isNGO) {
+            navigate("/ngo/dashboard", { state: { loginSuccess: true } });
+          } else if (isRecycler) {
+            navigate("/recycler/dashboard", { state: { loginSuccess: true } });
           } else {
             navigate("/impact", { state: { loginSuccess: true } });
           }
