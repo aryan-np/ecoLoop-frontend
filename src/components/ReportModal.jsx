@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import reportAPI from "../api/report";
 import Toast from "./Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function ReportModal({ isOpen, onClose, listingId, conversationId, category = "product" }) {
   const [formData, setFormData] = useState({
@@ -29,12 +30,12 @@ export default function ReportModal({ isOpen, onClose, listingId, conversationId
     e.preventDefault();
 
     if (!formData.subject.trim()) {
-      setToast({ type: "error", message: "Please provide a subject" });
+      setToast({ type: "error", message: "Please provide a subject", key: Date.now() });
       return;
     }
 
     if (!formData.description.trim()) {
-      setToast({ type: "error", message: "Please provide a description" });
+      setToast({ type: "error", message: "Please provide a description", key: Date.now() });
       return;
     }
 
@@ -60,7 +61,7 @@ export default function ReportModal({ isOpen, onClose, listingId, conversationId
       const response = await reportAPI.submitReport(reportData);
 
       if (response.IsSuccess || response.id) {
-        setToast({ type: "success", message: "Report submitted successfully" });
+        setToast({ type: "success", message: "Report submitted successfully", key: Date.now() });
         setTimeout(() => {
           onClose();
           // Reset form
@@ -68,12 +69,11 @@ export default function ReportModal({ isOpen, onClose, listingId, conversationId
           setFileName("");
         }, 1500);
       } else {
-        throw new Error(response.ErrorMessage || "Failed to submit report");
+        setToast({ type: "error", message: getErrorMessage(response, "Failed to submit report"), key: Date.now() });
       }
     } catch (error) {
       console.error("Report submission error:", error);
-      const errorMessage = error.message || "Failed to submit report. Please try again.";
-      setToast({ type: "error", message: errorMessage });
+      setToast({ type: "error", message: getErrorMessage(error, "Failed to submit report. Please try again."), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -246,9 +246,9 @@ export default function ReportModal({ isOpen, onClose, listingId, conversationId
       {/* Toast */}
       {toast && (
         <Toast
+          key={toast.key}
           type={toast.type}
           message={toast.message}
-          duration={2000}
           onClose={() => setToast(null)}
         />
       )}

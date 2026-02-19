@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import authAPI from "../api/auth";
 import Toast from "../components/Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function VerificationApplication() {
   const navigate = useNavigate();
@@ -34,34 +35,6 @@ export default function VerificationApplication() {
   const removeFile = (index) => {
     const newFiles = formData.document_files.filter((_, i) => i !== index);
     setFormData({ ...formData, document_files: newFiles });
-  };
-
-  const parseErrorMessage = (errorMessage) => {
-    if (!errorMessage) return "An error occurred";
-    
-    // If it's a string, return it
-    if (typeof errorMessage === 'string') return errorMessage;
-    
-    // If it's an object with field errors
-    if (typeof errorMessage === 'object') {
-      // Check for non_field_errors
-      if (errorMessage.non_field_errors && Array.isArray(errorMessage.non_field_errors)) {
-        return errorMessage.non_field_errors.join(', ');
-      }
-      
-      // Check for other field errors
-      const errors = Object.values(errorMessage).flat();
-      if (errors.length > 0) {
-        return errors.join(', ');
-      }
-    }
-    
-    // If it's an array
-    if (Array.isArray(errorMessage)) {
-      return errorMessage.join(', ');
-    }
-    
-    return "An error occurred";
   };
 
   const handleSubmit = async (e) => {
@@ -108,7 +81,7 @@ export default function VerificationApplication() {
         }, 1500);
       } else {
         // Handle error response
-        const errorMsg = parseErrorMessage(response.ErrorMessage);
+        const errorMsg = getErrorMessage(response, "Failed to submit application");
         setToast({
           message: errorMsg,
           type: "error",
@@ -123,13 +96,12 @@ export default function VerificationApplication() {
       }
     } catch (error) {
       // Handle exception
-      const errorMsg = error.response?.ErrorMessage 
-        ? parseErrorMessage(error.response.ErrorMessage)
-        : (error.message || "An error occurred while submitting the application");
+      const errorMsg = getErrorMessage(error, "An error occurred while submitting the application");
       
       setToast({
         message: errorMsg,
         type: "error",
+        key: Date.now()
       });
     } finally {
       setIsSubmitting(false);
@@ -140,7 +112,7 @@ export default function VerificationApplication() {
 
   return (
     <div className="max-w-4xl mx-auto py-8">
-      {toast && <Toast message={toast.message} type={toast.type} />}
+      {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
       <div className="mb-8">

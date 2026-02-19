@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import DialogModal from "./DialogModal";
 import authAPI from "../api/auth";
 import Toast from "./Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function VerificationApplicationModal({ isOpen, onClose, applicationType, onSuccess }) {
   const [step, setStep] = useState(1); // 1: Choose type, 2: Fill form, 3: Confirm
@@ -59,7 +60,7 @@ export default function VerificationApplicationModal({ isOpen, onClose, applicat
         !formData.contact_person_name || !formData.contact_phone || 
         !formData.contact_email || !formData.office_address || 
         !formData.service_coverage_area) {
-      setToast({ message: "Please fill in all required fields", type: "error" });
+      setToast({ message: "Please fill in all required fields", type: "error", key: Date.now() });
       return;
     }
     setStep(3);
@@ -71,7 +72,7 @@ export default function VerificationApplicationModal({ isOpen, onClose, applicat
 
   const handleSubmit = async () => {
     if (!formData.terms_accepted) {
-      setToast({ message: "Please accept the terms and conditions", type: "error" });
+      setToast({ message: "Please accept the terms and conditions", type: "error", key: Date.now() });
       return;
     }
 
@@ -100,21 +101,23 @@ export default function VerificationApplicationModal({ isOpen, onClose, applicat
       }
 
       if (response.IsSuccess || response.id) {
-        setToast({ message: "Application submitted successfully!", type: "success" });
+        setToast({ message: "Application submitted successfully!", type: "success", key: Date.now() });
         setTimeout(() => {
           onSuccess && onSuccess();
           handleClose();
         }, 1500);
       } else {
         setToast({
-          message: response.ErrorMessage || "Failed to submit application",
+          message: getErrorMessage(response, "Failed to submit application"),
           type: "error",
+          key: Date.now()
         });
       }
     } catch (error) {
       setToast({
-        message: error.message || "An error occurred while submitting the application",
+        message: getErrorMessage(error, "An error occurred while submitting the application"),
         type: "error",
+        key: Date.now()
       });
     } finally {
       setIsSubmitting(false);

@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import productAPI from "../api/product";
 import { createThreadAndSendMessage } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
-import Alert from "../components/Alert";
+import Toast from "../components/Toast";
 import ImageCarousel from "../components/ImageCarousel";
 import ReportModal from "../components/ReportModal";
+import { getErrorMessage } from "../utils/errorHandler";
 
 function getName(v) {
   if (!v) return "";
@@ -40,6 +41,7 @@ export default function ProductDetail() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [messagingLoading, setMessagingLoading] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Scroll to top when product ID changes
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function ProductDetail() {
       
       if (!ownerId) {
         console.error("Owner ID not found. Product object:", product);
-        alert("Could not identify seller. Please try again.");
+        setToast({ type: "error", message: "Could not identify seller. Please try again.", key: Date.now() });
         setMessagingLoading(false);
         return;
       }
@@ -132,9 +134,9 @@ export default function ProductDetail() {
       });
     } catch (err) {
       console.error("Error creating message thread:", err);
-      // Don't show alert for unauthorized errors - the global modal will handle it
+      // Don't show toast for unauthorized errors - the global modal will handle it
       if (!err?.isUnauthorized) {
-        alert("Failed to send message. Please try again.");
+        setToast({ type: "error", message: getErrorMessage(err, "Failed to send message. Please try again."), key: Date.now() });
       }
     } finally {
       setMessagingLoading(false);
@@ -160,7 +162,14 @@ export default function ProductDetail() {
   if (error) {
     return (
       <main className="max-w-6xl mx-auto px-4 py-6">
-        <Alert type="error">{error}</Alert>
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center gap-3 text-red-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        </div>
       </main>
     );
   }
@@ -314,6 +323,8 @@ export default function ProductDetail() {
         onClose={() => setShowReportModal(false)}
         listingId={id}
       />
+
+      {toast && <Toast type={toast.type} message={toast.message} duration={3000} onClose={() => setToast(null)} />}
     </main>
   );
 }

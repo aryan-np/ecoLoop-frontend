@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import productAPI from "../api/product";
 import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const getString = (value) => {
   if (!value) return "";
@@ -52,7 +53,7 @@ export default function MyListings() {
       setProducts(validProducts);
     } catch (err) {
       console.error("Error loading listings:", err);
-      setToast({ type: "error", message: err.message || "Failed to load listings" });
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to load listings"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -67,10 +68,10 @@ export default function MyListings() {
         setToast({ type: "success", message: "Product marked as sold" });
         loadListings();
       } else {
-        setToast({ type: "error", message: "Failed to mark as sold" });
+        setToast({ type: "error", message: getErrorMessage(resp, "Failed to mark as sold") });
       }
     } catch (err) {
-      setToast({ type: "error", message: err.message || "Failed to mark as sold" });
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to mark as sold") });
     } finally {
       setUpdating(null);
     }
@@ -85,7 +86,7 @@ export default function MyListings() {
       setToast({ type: "success", message: "Product deleted successfully" });
       loadListings();
     } catch (err) {
-      setToast({ type: "error", message: err.message || "Failed to delete product" });
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to delete product") });
     } finally {
       setUpdating(null);
     }

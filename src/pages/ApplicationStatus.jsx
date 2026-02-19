@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import authAPI from "../api/auth";
 import Toast from "../components/Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function ApplicationStatus() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function ApplicationStatus() {
       setApplication(applicationData);
     } catch (error) {
       console.error("Error loading application:", error);
-      setToast({ message: "Failed to load application status", type: "error" });
+      setToast({ message: getErrorMessage(error, "Failed to load application status"), type: "error", key: Date.now() });
     } finally {
       setLoading(false);
     }

@@ -99,6 +99,7 @@ function InnerApp() {
               <Route path="disputes" element={<DisputesReports />} />
               <Route path="logs" element={<SystemLogs />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             {/* NGO Routes */}

@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import authAPI from "../api/auth";
 import { useNavigate } from "react-router-dom";
-import Alert from "../components/Alert";
 import Toast from "../components/Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 import logo from "../../logo.png";
 
 export default function Register() {
   const [form, setForm] = useState({ email: "", full_name: "", phone_number: "", password: "", confirm_password: "" });
-  const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const navigate = useNavigate();
@@ -25,10 +24,9 @@ export default function Register() {
 
   const submit = async (e) => {
     e.preventDefault();
-    setMessage(null);
     const err = validate();
     if (err) {
-      setToast({ type: "error", message: err });
+      setToast({ type: "error", message: err, key: Date.now() });
       return;
     }
 
@@ -36,19 +34,18 @@ export default function Register() {
     try {
       const resp = await authAPI.register(form.email, form.full_name, form.phone_number, form.password, form.confirm_password);
       if (resp.IsSuccess) {
-        console.log("Registration Response:", resp); // Debug log
+        console.log("Registration Response:", resp);
         const regId = resp.Result?.user?.registration_id || resp.Result?.registration_id || resp.Result?.id;
-        console.log("Registration ID to send:", regId); // Debug log
-        setToast({ type: "success", message: "Registration successful! OTP sent to email." });
+        console.log("Registration ID to send:", regId);
+        setToast({ type: "success", message: "Registration successful! OTP sent to email.", key: Date.now() });
         setTimeout(() => {
           navigate("/verify-otp", { state: { email: form.email, purpose: "REGISTER", registration_id: regId } });
         }, 2000);
       } else {
-        const errorMsg = Array.isArray(resp.ErrorMessage) ? resp.ErrorMessage.join("; ") : JSON.stringify(resp.ErrorMessage);
-        setToast({ type: "error", message: errorMsg });
+        setToast({ type: "error", message: getErrorMessage(resp, "Registration failed"), key: Date.now() });
       }
     } catch (err) {
-      setToast({ type: "error", message: err.message || "An error occurred" });
+      setToast({ type: "error", message: getErrorMessage(err, "An error occurred during registration"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -63,8 +60,6 @@ export default function Register() {
           <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
           <p className="text-gray-600 text-sm mt-2">Join ecoLoop community</p>
         </div>
-
-        {message && <Alert type={message.type === "error" ? "error" : "success"} className="mb-4">{message.text}</Alert>}
 
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -165,7 +160,7 @@ export default function Register() {
         </div>
       </div>
 
-      {toast && <Toast type={toast.type} message={toast.message} duration={2000} />}
+      {toast && <Toast key={toast.key} type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

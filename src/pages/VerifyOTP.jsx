@@ -2,8 +2,9 @@ import React, { useState, useEffect, useContext } from "react";
 import authAPI from "../api/auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthProvider";
-import Alert from "../components/Alert";
+import Toast from "../components/Toast";
 import OTPInput from "../components/OTPInput";
+import { getErrorMessage } from "../utils/errorHandler";
 import logo from "../../logo.png";
 
 export default function VerifyOTP() {
@@ -14,14 +15,13 @@ export default function VerifyOTP() {
   const [purpose, setPurpose] = useState(loc.state?.purpose || "REGISTER");
   const [registrationId, setRegistrationId] = useState(loc.state?.registration_id || "");
   const [otp, setOtp] = useState("");
-  const [message, setMessage] = useState(null);
+  const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
-    setMessage(null);
 
-    if (otp.length !== 6) return setMessage({ type: "error", text: "OTP must be 6 digits" });
+    if (otp.length !== 6) return setToast({ type: "error", message: "OTP must be 6 digits" });
 
     setLoading(true);
     try {
@@ -41,17 +41,17 @@ export default function VerifyOTP() {
           login({ ...resp.Result.tokens, user: resp.Result.user });
           navigate("/impact", { replace: true });
         } else {
-          setMessage({ type: "success", text: resp.Result?.message || "OTP verified successfully" });
+          setToast({ type: "success", message: resp.Result?.message || "OTP verified successfully" });
           // For registration, redirect to login
           if (purpose === "REGISTER") {
             setTimeout(() => navigate("/login"), 2000);
           }
         }
       } else {
-        setMessage({ type: "error", text: Array.isArray(resp.ErrorMessage) ? resp.ErrorMessage.join("; ") : JSON.stringify(resp.ErrorMessage) });
+        setToast({ type: "error", message: getErrorMessage(resp, "OTP verification failed"), key: Date.now() });
       }
     } catch (err) {
-      setMessage({ type: "error", text: err.message || JSON.stringify(err) });
+      setToast({ type: "error", message: getErrorMessage(err, "An error occurred"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -66,8 +66,6 @@ export default function VerifyOTP() {
           <h2 className="text-2xl font-bold text-gray-900">Log in with OTP</h2>
           <p className="text-gray-600 text-sm mt-2">Enter the 6-digit code sent to your email</p>
         </div>
-
-        {message && <Alert type={message.type === "error" ? "error" : "success"} className="mb-6">{message.text}</Alert>}
 
         <form onSubmit={submit} className="space-y-6">
           {/* OTP Input */}
@@ -101,6 +99,8 @@ export default function VerifyOTP() {
           </button>
         </div>
       </div>
+
+      {toast && <Toast key={toast.key} type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

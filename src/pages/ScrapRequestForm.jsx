@@ -4,6 +4,7 @@ import recycleAPI from '../api/recycle';
 import Toast from '../components/Toast';
 import UnauthorizedModal from '../components/UnauthorizedModal';
 import { getAccess } from '../auth/tokenService';
+import { getErrorMessage } from '../utils/errorHandler';
 
 export default function ScrapRequestForm() {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export default function ScrapRequestForm() {
       setCategories(data);
     } catch (err) {
       console.error('Error loading categories:', err);
-      setToast({ type: 'error', message: 'Failed to load scrap categories' });
+      setToast({ type: 'error', message: getErrorMessage(err, 'Failed to load scrap categories') });
     }
   };
 
@@ -116,7 +117,7 @@ export default function ScrapRequestForm() {
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Error submitting scrap request:', err);
-      setToast({ type: 'error', message: 'Failed to submit request. Please try again.' });
+      setToast({ type: 'error', message: getErrorMessage(err, 'Failed to submit request. Please try again.') });
     } finally {
       setLoading(false);
     }

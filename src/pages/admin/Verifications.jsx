@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminAPI from '../../api/admin';
 import Toast from '../../components/Toast';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 const Applications = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const Applications = () => {
       } else {
         setToast({ 
           show: true, 
-          message: response.ErrorMessage || 'Failed to load applications', 
+          message: getErrorMessage(response, 'Failed to load applications'), 
           type: 'error' 
         });
       }
@@ -42,7 +43,7 @@ const Applications = () => {
       console.error('Error loading applications:', error);
       setToast({ 
         show: true, 
-        message: 'Failed to load applications', 
+        message: getErrorMessage(error, 'Failed to load applications'), 
         type: 'error' 
       });
     } finally {

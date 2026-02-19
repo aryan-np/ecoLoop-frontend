@@ -4,6 +4,7 @@ import productAPI from "../api/product";
 import ProductCard from "../components/ProductCard";
 import Toast from "../components/Toast";
 import AuthContext from "../auth/AuthProvider";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function Products() {
   const navigate = useNavigate();
@@ -97,8 +98,7 @@ export default function Products() {
       setPagination(paginationData);
     } catch (err) {
       console.error("Error loading products:", err);
-      const errorMessage = err.message || "Failed to load products";
-      setToast({ type: "error", message: errorMessage });
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to load products"), key: Date.now() });
       setProducts([]);
     } finally {
       setLoading(false);

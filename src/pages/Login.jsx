@@ -3,13 +3,12 @@ import authAPI from "../api/auth";
 import AuthContext from "../auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import Input from "../components/Input";
-import Alert from "../components/Alert";
 import Toast from "../components/Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 import logo from "../../logo.png";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const { login } = useContext(AuthContext);
@@ -19,10 +18,9 @@ export default function Login() {
 
   const submitPassword = async (e) => {
     e.preventDefault();
-    setMessage(null);
 
-    if (!form.email) return setMessage({ type: "error", text: "Email is required" });
-    if (!form.password) return setMessage({ type: "error", text: "Password is required" });
+    if (!form.email) return setToast({ type: "error", message: "Email is required", key: Date.now() });
+    if (!form.password) return setToast({ type: "error", message: "Password is required", key: Date.now() });
 
     setLoading(true);
     try {
@@ -49,21 +47,10 @@ export default function Login() {
           }
         }
       } else {
-        // Handle nested error message structure
-        let errorMsg = "Login failed";
-        if (resp.ErrorMessage?.message && Array.isArray(resp.ErrorMessage.message)) {
-          errorMsg = resp.ErrorMessage.message.join("; ");
-        } else if (Array.isArray(resp.ErrorMessage)) {
-          errorMsg = resp.ErrorMessage.join("; ");
-        } else if (typeof resp.ErrorMessage === 'string') {
-          errorMsg = resp.ErrorMessage;
-        } else if (resp.ErrorMessage) {
-          errorMsg = JSON.stringify(resp.ErrorMessage);
-        }
-        setToast({ type: "error", message: errorMsg });
+        setToast({ type: "error", message: getErrorMessage(resp, "Login failed"), key: Date.now() });
       }
     } catch (err) {
-      setToast({ type: "error", message: err.message || "An error occurred" });
+      setToast({ type: "error", message: getErrorMessage(err, "An error occurred during login"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -71,32 +58,20 @@ export default function Login() {
 
   const submitOTP = async (e) => {
     e.preventDefault();
-    setMessage(null);
 
-    if (!form.email) return setMessage({ type: "error", text: "Email is required" });
+    if (!form.email) return setToast({ type: "error", message: "Email is required", key: Date.now() });
 
     setLoading(true);
     try {
       const resp = await authAPI.login(form.email, "OTP");
       if (resp.IsSuccess) {
-        setToast({ type: "info", message: "OTP sent! Check your email..." });
+        setToast({ type: "info", message: "OTP sent! Check your email...", key: Date.now() });
         setTimeout(() => navigate("/verify-otp", { state: { email: form.email, purpose: "LOGIN" } }), 1500);
       } else {
-        // Handle nested error message structure
-        let errorMsg = "Failed to send OTP";
-        if (resp.ErrorMessage?.message && Array.isArray(resp.ErrorMessage.message)) {
-          errorMsg = resp.ErrorMessage.message.join("; ");
-        } else if (Array.isArray(resp.ErrorMessage)) {
-          errorMsg = resp.ErrorMessage.join("; ");
-        } else if (typeof resp.ErrorMessage === 'string') {
-          errorMsg = resp.ErrorMessage;
-        } else if (resp.ErrorMessage) {
-          errorMsg = JSON.stringify(resp.ErrorMessage);
-        }
-        setToast({ type: "error", message: errorMsg });
+        setToast({ type: "error", message: getErrorMessage(resp, "Failed to send OTP"), key: Date.now() });
       }
     } catch (err) {
-      setToast({ type: "error", message: err.message || "An error occurred" });
+      setToast({ type: "error", message: getErrorMessage(err, "An error occurred"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -111,8 +86,6 @@ export default function Login() {
           <h2 className="text-2xl font-bold text-gray-900">Log In</h2>
           <p className="text-gray-600 text-sm mt-2">Enter your credentials to access your account</p>
         </div>
-
-        {message && <Alert type={message.type === "error" ? "error" : "success"} className="mb-4">{message.text}</Alert>}
 
         {/* Password Login Form */}
         <form onSubmit={submitPassword} className="space-y-4 mb-6">
@@ -185,7 +158,7 @@ export default function Login() {
         </div>
       </div>
 
-      {toast && <Toast type={toast.type} message={toast.message} duration={2000} onClose={() => setToast(null)} />}
+      {toast && <Toast key={toast.key} type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

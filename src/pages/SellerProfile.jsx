@@ -5,6 +5,7 @@ import productAPI from "../api/product";
 import Spinner from "../components/Spinner";
 import Alert from "../components/Alert";
 import ProductCard from "../components/ProductCard";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function SellerProfile() {
   const { userId } = useParams();
@@ -52,7 +53,7 @@ export default function SellerProfile() {
         
         setSellerListings(listingsData);
       } catch (err) {
-        setError(err?.message || "Failed to load seller profile");
+        setError(getErrorMessage(err, "Failed to load seller profile"));
       } finally {
         setLoading(false);
       }

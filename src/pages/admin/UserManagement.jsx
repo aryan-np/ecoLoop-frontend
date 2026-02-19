@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import adminAPI from '../../api/admin';
 import Toast from '../../components/Toast';
 import Spinner from '../../components/Spinner';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -27,7 +28,7 @@ export default function UserManagement() {
       const data = await adminAPI.getUsers();
       setUsers(data);
     } catch (error) {
-      setToast({ type: 'error', message: 'Failed to load users' });
+      setToast({ type: 'error', message: getErrorMessage(error, 'Failed to load users') });
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ export default function UserManagement() {
         )
       );
     } catch (error) {
-      setToast({ type: 'error', message: `Failed to update user status` });
+      setToast({ type: 'error', message: getErrorMessage(error, 'Failed to update user status') });
     } finally {
       setConfirmBlock(null);
     }
@@ -107,7 +108,7 @@ export default function UserManagement() {
       const userDetails = await adminAPI.getUserDetails(userId);
       setSelectedUser(userDetails);
     } catch (error) {
-      setToast({ type: 'error', message: 'Failed to load user details' });
+      setToast({ type: 'error', message: getErrorMessage(error, 'Failed to load user details') });
       setShowViewModal(false);
     } finally {
       setViewLoading(false);

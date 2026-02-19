@@ -10,7 +10,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Show login success toast if coming from login page
     if (location.state?.loginSuccess) {
-      setToast({ type: "success", message: "Login successful!" });
+      setToast({ type: "success", message: "Login successful!", key: Date.now() });
     }
   }, [location.state?.loginSuccess]);
 
@@ -111,7 +111,7 @@ export default function Dashboard() {
       </div>
 
       {/* Toast for login success */}
-      {toast && <Toast type={toast.type} message={toast.message} duration={2000} />}
+      {toast && <Toast key={toast.key} type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import donationAPI from '../api/donation';
 import Toast from '../components/Toast';
 import UnauthorizedModal from '../components/UnauthorizedModal';
 import { getAccess } from '../auth/tokenService';
+import { getErrorMessage } from '../utils/errorHandler';
 
 export default function DonationForm() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export default function DonationForm() {
       setConditions(Array.isArray(condResp) ? condResp : []);
     } catch (err) {
       console.error('Error loading categories/conditions:', err);
-      setToast({ type: 'error', message: 'Failed to load form options' });
+      setToast({ type: 'error', message: getErrorMessage(err, 'Failed to load form options') });
     }
   };
 
@@ -109,7 +110,7 @@ export default function DonationForm() {
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Error submitting donation:', err);
-      setToast({ type: 'error', message: 'Failed to submit donation. Please try again.' });
+      setToast({ type: 'error', message: getErrorMessage(err, 'Failed to submit donation. Please try again.') });
     } finally {
       setLoading(false);
     }

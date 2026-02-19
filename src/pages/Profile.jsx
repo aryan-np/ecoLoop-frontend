@@ -4,6 +4,7 @@ import AuthContext from "../auth/AuthProvider";
 import authAPI from "../api/auth";
 import apiClient from "../api/client";
 import Toast from "../components/Toast";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -144,14 +145,13 @@ export default function Profile() {
         await loadProfile();
       } else {
         setToast({
-          message: Array.isArray(resp.ErrorMessage)
-            ? resp.ErrorMessage.join("; ")
-            : JSON.stringify(resp.ErrorMessage),
+          message: getErrorMessage(resp, "Failed to update profile"),
           type: "error",
+          key: Date.now()
         });
       }
     } catch (err) {
-      setToast({ message: err.message || "Failed to update profile", type: "error" });
+      setToast({ message: getErrorMessage(err, "Failed to update profile"), type: "error", key: Date.now() });
     } finally {
       setIsSaving(false);
     }

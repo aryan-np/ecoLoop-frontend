@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import reportAPI from '../../api/report';
 import Toast from '../../components/Toast';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 function formatDate(dateString) {
   if (!dateString) return "N/A";
@@ -71,7 +72,7 @@ const DisputesReports = () => {
       setReports(reportsList);
     } catch (error) {
       console.error("Error loading reports:", error);
-      setToast({ type: "error", message: "Failed to load reports" });
+      setToast({ type: "error", message: getErrorMessage(error, "Failed to load reports") });
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ const DisputesReports = () => {
       }
     } catch (error) {
       console.error("Error loading report detail:", error);
-      setToast({ type: "error", message: "Failed to load report details" });
+      setToast({ type: "error", message: getErrorMessage(error, "Failed to load report details") });
     } finally {
       setDetailLoading(false);
     }

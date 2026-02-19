@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import adminAPI from '../../api/admin';
 import Toast from '../../components/Toast';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 const ApplicationDetail = () => {
   const { id } = useParams();
@@ -28,7 +29,7 @@ const ApplicationDetail = () => {
       } else {
         setToast({ 
           show: true, 
-          message: response.ErrorMessage || 'Failed to load application', 
+          message: getErrorMessage(response, 'Failed to load application'), 
           type: 'error' 
         });
       }
@@ -36,7 +37,7 @@ const ApplicationDetail = () => {
       console.error('Error loading application:', error);
       setToast({ 
         show: true, 
-        message: 'Failed to load application', 
+        message: getErrorMessage(error, 'Failed to load application'), 
         type: 'error' 
       });
     } finally {
@@ -74,7 +75,7 @@ const ApplicationDetail = () => {
       } else {
         setToast({ 
           show: true, 
-          message: response.ErrorMessage || `Failed to ${action} application`, 
+          message: getErrorMessage(response, `Failed to ${action} application`), 
           type: 'error' 
         });
       }
@@ -82,7 +83,7 @@ const ApplicationDetail = () => {
       console.error(`Error ${action} application:`, error);
       setToast({ 
         show: true, 
-        message: `Failed to ${action} application`, 
+        message: getErrorMessage(error, `Failed to ${action} application`), 
         type: 'error' 
       });
     } finally {

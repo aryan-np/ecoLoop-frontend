@@ -5,6 +5,7 @@ import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
 import UnauthorizedModal from "../components/UnauthorizedModal";
 import apiClient from "../api/client";
+import { getErrorMessage } from "../utils/errorHandler";
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -48,7 +49,7 @@ export default function ProductForm() {
         setCategories(Array.isArray(cResp?.Result) ? cResp.Result : []);
         setConditions(Array.isArray(condResp?.Result) ? condResp.Result : []);
       } catch (err) {
-        setToast({ type: "error", message: "Failed to load categories or conditions" });
+        setToast({ type: "error", message: getErrorMessage(err, "Failed to load categories or conditions"), key: Date.now() });
       }
     };
     loadMeta();
@@ -64,7 +65,7 @@ export default function ProductForm() {
         const data = resp?.IsSuccess ? resp.Result : resp?.Result || resp;
 
         if (!data) {
-          setToast({ type: "error", message: "Failed to load product" });
+          setToast({ type: "error", message: getErrorMessage(resp, "Failed to load product"), key: Date.now() });
           return;
         }
 
@@ -79,7 +80,7 @@ export default function ProductForm() {
           is_active: typeof data.is_active === "boolean" ? data.is_active : true,
         });
       } catch (err) {
-        setToast({ type: "error", message: "Failed to load product" });
+        setToast({ type: "error", message: getErrorMessage(err, "Failed to load product"), key: Date.now() });
       }
     };
 
@@ -152,19 +153,17 @@ export default function ProductForm() {
         setToast({
           type: "success",
           message: id ? "Product updated successfully!" : "Product created successfully!",
+          key: Date.now()
         });
 
         setTimeout(() => {
           navigate("/products");
         }, 1500);
       } else {
-        const errorMsg = Array.isArray(resp?.ErrorMessage)
-          ? resp.ErrorMessage.join("; ")
-          : JSON.stringify(resp?.ErrorMessage || resp);
-        setToast({ type: "error", message: errorMsg });
+        setToast({ type: "error", message: getErrorMessage(resp, "Failed to save product"), key: Date.now() });
       }
     } catch (err) {
-      setToast({ type: "error", message: err.message || "An error occurred" });
+      setToast({ type: "error", message: getErrorMessage(err, "An error occurred"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -206,13 +205,13 @@ export default function ProductForm() {
                       body: { status: "sold" },
                     });
                     if (resp && (resp.IsSuccess || resp.id)) {
-                      setToast({ type: "success", message: "Product marked as sold!" });
+                      setToast({ type: "success", message: "Product marked as sold!", key: Date.now() });
                       setTimeout(() => navigate("/my-listings"), 1500);
                     } else {
-                      setToast({ type: "error", message: "Failed to mark as sold" });
+                      setToast({ type: "error", message: getErrorMessage(resp, "Failed to mark as sold"), key: Date.now() });
                     }
                   } catch (err) {
-                    setToast({ type: "error", message: err.message || "Failed to mark as sold" });
+                    setToast({ type: "error", message: getErrorMessage(err, "Failed to mark as sold"), key: Date.now() });
                   }
                 }}
                 className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-2"
