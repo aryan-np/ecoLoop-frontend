@@ -154,6 +154,47 @@ const adminAPI = {
       console.error('Error reviewing role application:', error);
       throw error;
     }
+  },
+
+  // Get activity logs
+  getActivityLogs: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.action) params.append('action', filters.action);
+      if (filters.result) params.append('result', filters.result);
+      if (filters.search) params.append('search', filters.search);
+      
+      const queryString = params.toString();
+      const url = `/api/auth/admin/activity-logs/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiClient(url);
+      return response;
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      throw error;
+    }
+  },
+
+  // Get activity logs by admin
+  getActivityLogsByAdmin: async (adminId) => {
+    try {
+      const response = await apiClient(`/api/auth/admin/activity-logs/by-admin/?admin_id=${adminId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching admin activity logs:', error);
+      throw error;
+    }
+  },
+
+  // Get activity logs by target
+  getActivityLogsByTarget: async (targetType, targetId) => {
+    try {
+      const response = await apiClient(`/api/auth/admin/activity-logs/by-target/?target_type=${targetType}&target_id=${targetId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching target activity logs:', error);
+      throw error;
+    }
   }
 };
 

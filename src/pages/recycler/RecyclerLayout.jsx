@@ -60,15 +60,15 @@ export default function RecyclerLayout() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-64 bg-cyan-50 border-r border-cyan-100 flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Recycler Panel</h1>
-          <p className="text-sm text-gray-600 mt-1">{user?.full_name || 'Recycler User'}</p>
+        <div className="p-6 border-b border-cyan-100">
+          <h1 className="text-2xl font-bold text-teal-900">Recycler Panel</h1>
+          <p className="text-sm text-teal-700 mt-1">{user?.full_name || 'Recycler User'}</p>
           <div className="mt-3">
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+            <span className="inline-block px-3 py-1 bg-teal-600 text-white text-xs font-semibold rounded-full">
               Verified Recycler
             </span>
           </div>
@@ -83,8 +83,8 @@ export default function RecyclerLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-6 py-3 transition-colors ${
                   isActive
-                    ? 'bg-green-50 text-green-700 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-teal-200 text-teal-900 border-l-4 border-teal-600'
+                    : 'text-teal-800 hover:bg-cyan-100'
                 }`
               }
             >
@@ -95,10 +95,10 @@ export default function RecyclerLayout() {
         </nav>
 
         {/* Back to Platform & Logout */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-cyan-100 p-4">
           <button
             onClick={() => navigate('/products')}
-            className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition mb-2"
+            className="w-full flex items-center gap-2 px-4 py-2 text-teal-800 hover:bg-cyan-100 rounded-lg transition mb-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -107,7 +107,7 @@ export default function RecyclerLayout() {
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+            className="w-full flex items-center gap-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

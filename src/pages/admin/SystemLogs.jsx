@@ -1,84 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import adminAPI from '../../api/admin';
 
 const SystemLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [actionFilter, setActionFilter] = useState('all');
-  const [resultFilter, setResultFilter] = useState('all');
+  const [actionFilter, setActionFilter] = useState('');
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const logs = [
-    {
-      id: 1,
-      timestamp: '2026-02-05 14:23:15',
-      admin: 'Admin User',
-      action: 'Blocked user',
-      targetEntity: 'User: Anil Thapa (ID: 1234)',
-      result: 'Success',
-      details: 'Reason: Multiple reports of fraudulent activity'
-    },
-    {
-      id: 2,
-      timestamp: '2026-02-05 13:15:42',
-      admin: 'Admin User',
-      action: 'Approved NGO',
-      targetEntity: 'NGO: Green Nepal Foundation (ID: 5678)',
-      result: 'Success',
-      details: 'All verification documents approved'
-    },
-    {
-      id: 3,
-      timestamp: '2026-02-05 11:28:33',
-      admin: 'Admin User',
-      action: 'Removed listing',
-      targetEntity: 'Listing: Prohibited item (ID: 9012)',
-      result: 'Success',
-      details: 'Violated platform policies'
-    },
-    {
-      id: 4,
-      timestamp: '2026-02-05 10:45:21',
-      admin: 'Admin User',
-      action: 'Changed user role',
-      targetEntity: 'User: Sita Sharma (ID: 3456)',
-      result: 'Success',
-      details: 'Changed from Buyer to Seller'
-    },
-    {
-      id: 5,
-      timestamp: '2026-02-05 09:12:08',
-      admin: 'Admin User',
-      action: 'Rejected verification',
-      targetEntity: 'Recycler: Fake Company (ID: 7890)',
-      result: 'Success',
-      details: 'Incomplete documentation'
-    },
-    {
-      id: 6,
-      timestamp: '2026-02-04 16:53:33',
-      admin: 'Admin User',
-      action: 'Resolved dispute',
-      targetEntity: 'Dispute: Case #2345',
-      result: 'Success',
-      details: 'Refund processed to buyer'
-    },
-    {
-      id: 7,
-      timestamp: '2026-02-04 15:20:17',
-      admin: 'Admin User',
-      action: 'Unblocked user',
-      targetEntity: 'User: Maya Poudel (ID: 4567)',
-      result: 'Success',
-      details: 'Appeal accepted after review'
-    },
-    {
-      id: 8,
-      timestamp: '2026-02-04 14:08:45',
-      admin: 'Admin User',
-      action: 'Updated settings',
-      targetEntity: 'System Settings',
-      result: 'Failed',
-      details: 'Permission denied - insufficient privileges'
+  const fetchLogs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filters = {};
+      if (actionFilter && actionFilter !== 'all') filters.action = actionFilter;
+      if (searchQuery) filters.search = searchQuery;
+      
+      const response = await adminAPI.getActivityLogs(filters);
+      
+      // Handle paginated response
+      if (response?.results && Array.isArray(response.results)) {
+        setLogs(response.results);
+        setTotalCount(response.count || response.results.length);
+      } else if (Array.isArray(response)) {
+        setLogs(response);
+        setTotalCount(response.length);
+      } else {
+        setLogs([]);
+        setTotalCount(0);
+      }
+    } catch (err) {
+      console.error('Error fetching logs:', err);
+      setError('Failed to load system logs. Please try again.');
+      setLogs([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchLogs();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [actionFilter, searchQuery]);
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -97,9 +79,9 @@ const SystemLogs = () => {
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm mb-6">
         <div className="p-6 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
-            <div className="relative">
+            <div className="relative md:w-4/5">
               <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -116,25 +98,19 @@ const SystemLogs = () => {
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="md:w-1/5 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             >
-              <option value="all">All Actions</option>
-              <option value="blocked">Blocked user</option>
-              <option value="approved">Approved NGO</option>
-              <option value="removed">Removed listing</option>
-              <option value="changed">Changed user role</option>
-              <option value="resolved">Resolved dispute</option>
-            </select>
-
-            {/* Result Filter */}
-            <select
-              value={resultFilter}
-              onChange={(e) => setResultFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            >
-              <option value="all">All Results</option>
-              <option value="success">Success</option>
-              <option value="failed">Failed</option>
+              <option value="">All Actions</option>
+              <option value="user_blocked">Blocked User</option>
+              <option value="user_unblocked">Unblocked User</option>
+              <option value="user_role_changed">Changed User Role</option>
+              <option value="application_approved">Approved Role Application</option>
+              <option value="application_rejected">Rejected Role Application</option>
+              <option value="listing_removed">Removed Listing</option>
+              <option value="listing_restored">Restored Listing</option>
+              <option value="report_resolved">Resolved Report</option>
+              <option value="dispute_resolved">Resolved Dispute</option>
+              <option value="other">Other Action</option>
             </select>
           </div>
         </div>
@@ -157,53 +133,74 @@ const SystemLogs = () => {
                   Target Entity
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Result
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Details
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                    {log.timestamp}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{log.admin}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
-                      {log.action}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {log.targetEntity}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {log.result === 'Success' ? (
-                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      )}
-                      <span className={`text-sm font-medium ${
-                        log.result === 'Success' ? 'text-green-700' : 'text-red-700'
-                      }`}>
-                        {log.result}
-                      </span>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-8 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="text-gray-600">Loading logs...</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {log.details}
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-8 text-center">
+                    <div className="text-red-600">
+                      <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p>{error}</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                    <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p>No logs found</p>
+                  </td>
+                </tr>
+              ) : (
+                logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                      {formatTimestamp(log.timestamp)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{log.admin_name || 'N/A'}</div>
+                      {log.admin_email && (
+                        <div className="text-xs text-gray-500">{log.admin_email}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                        {log.action_display || log.action || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <div>{log.target_name || 'N/A'}</div>
+                      {log.target_type && (
+                        <div className="text-xs text-gray-500">
+                          {log.target_type}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {log.reason || 'N/A'}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -224,7 +221,7 @@ const SystemLogs = () => {
       {/* Stats */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <p className="text-sm text-gray-600">
-          Showing {logs.length} of 8 log entries
+          Showing {logs.length} of {totalCount} log entries
         </p>
       </div>
     </div>
