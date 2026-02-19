@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import donationAPI from '../api/donation';
 import Toast from '../components/Toast';
 import UnauthorizedModal from '../components/UnauthorizedModal';
+import LocationPicker from '../components/LocationPicker';
 import { getAccess } from '../auth/tokenService';
 import { getErrorMessage } from '../utils/errorHandler';
 
@@ -20,6 +21,8 @@ export default function DonationForm() {
     quantity: '',
     condition: '',
     pickup_address: '',
+    latitude: null,
+    longitude: null,
     photos: [],
     notes: ''
   });
@@ -97,6 +100,9 @@ export default function DonationForm() {
       submitData.append('quantity', formData.quantity);
       submitData.append('condition', formData.condition);
       submitData.append('pickup_address', formData.pickup_address);
+      // Format coordinates to 5 decimal places (max 9 digits total)
+      if (formData.latitude !== null) submitData.append('latitude', Number(formData.latitude.toFixed(5)));
+      if (formData.longitude !== null) submitData.append('longitude', Number(formData.longitude.toFixed(5)));
       submitData.append('notes', formData.notes);
       
       // Append photos
@@ -213,6 +219,16 @@ export default function DonationForm() {
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
+          
+          <div className="mt-4">
+            <LocationPicker
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onLocationChange={(lat, lng) => {
+                setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+              }}
+            />
+          </div>
         </div>
 
         {/* Photo Upload */}

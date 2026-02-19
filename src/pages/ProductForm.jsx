@@ -4,6 +4,7 @@ import productAPI from "../api/product";
 import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
 import UnauthorizedModal from "../components/UnauthorizedModal";
+import LocationPicker from "../components/LocationPicker";
 import apiClient from "../api/client";
 import { getErrorMessage } from "../utils/errorHandler";
 
@@ -20,6 +21,8 @@ export default function ProductForm() {
     price: "",
     image: null,
     location: "",
+    latitude: null,
+    longitude: null,
     is_active: true,
   });
 
@@ -77,6 +80,8 @@ export default function ProductForm() {
           price: data.price ?? "",
           image: null,
           location: data.location || "",
+          latitude: data.latitude || null,
+          longitude: data.longitude || null,
           is_active: typeof data.is_active === "boolean" ? data.is_active : true,
         });
       } catch (err) {
@@ -135,6 +140,9 @@ export default function ProductForm() {
       fd.append("condition_id", form.condition_id);
       fd.append("price", form.price);
       fd.append("location", form.location);
+      // Format coordinates to 5 decimal places (max 9 digits total)
+      if (form.latitude !== null) fd.append("latitude", Number(form.latitude.toFixed(5)));
+      if (form.longitude !== null) fd.append("longitude", Number(form.longitude.toFixed(5)));
       fd.append("is_active", String(form.is_active));
       
       // Append multiple images as uploaded_images
@@ -350,7 +358,18 @@ export default function ProductForm() {
                 value={form.location}
                 onChange={onChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500"
+                placeholder="Enter your location address"
               />
+              
+              <div className="mt-4">
+                <LocationPicker
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  onLocationChange={(lat, lng) => {
+                    setForm((s) => ({ ...s, latitude: lat, longitude: lng }));
+                  }}
+                />
+              </div>
             </div>
 
             {/* Buttons */}

@@ -6,6 +6,7 @@ import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
 import ImageCarousel from "../components/ImageCarousel";
 import ReportModal from "../components/ReportModal";
+import MapPreview from "../components/MapPreview";
 import { getErrorMessage } from "../utils/errorHandler";
 
 function getName(v) {
@@ -286,6 +287,14 @@ export default function ProductDetail() {
               {normalized.description || "No description provided."}
             </p>
           </div>
+
+          {/* Location Map */}
+          {normalized.latitude && normalized.longitude && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Location</h2>
+              <MapPreview latitude={normalized.latitude} longitude={normalized.longitude} />
+            </div>
+          )}
 
           {/* Seller info card */}
           <div 
