@@ -105,9 +105,9 @@ export default function DonationForm() {
       if (formData.longitude !== null) submitData.append('longitude', Number(formData.longitude.toFixed(5)));
       submitData.append('notes', formData.notes);
       
-      // Append photos
+      // Append photos using the correct field name expected by backend
       formData.photos.forEach((photo) => {
-        submitData.append('photos', photo);
+        submitData.append('uploaded_images', photo);
       });
 
       await donationAPI.submitDonation(submitData);

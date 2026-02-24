@@ -103,20 +103,23 @@ export default function ScrapRequestForm() {
       // Find the category for the success message
       const selectedCategory = categories.find(cat => cat.id === parseInt(formData.scrap_category));
       
-      // Prepare data in the format backend expects
-      const submitData = {
-        material_type: selectedCategory?.material_type || '',
-        weight_kg: parseFloat(formData.estimated_weight),
-        pickup_address: formData.pickup_address,
-        preferred_time_slot: formData.preferred_time_slot,
-        condition: formData.scrap_condition,
-        category: parseInt(formData.scrap_category),
-        notes: formData.notes || ''
-      };
-
-      // Add coordinates if selected (format to 5 decimal places, max 9 digits total)
-      if (formData.latitude !== null) submitData.latitude = Number(formData.latitude.toFixed(5));
-      if (formData.longitude !== null) submitData.longitude = Number(formData.longitude.toFixed(5));
+      // Prepare data as FormData for file upload support
+      const submitData = new FormData();
+      submitData.append('category', formData.scrap_category);
+      submitData.append('weight_kg', formData.estimated_weight);
+      submitData.append('pickup_address', formData.pickup_address);
+      submitData.append('preferred_time_slot', formData.preferred_time_slot);
+      submitData.append('condition', formData.scrap_condition);
+      if (formData.notes) submitData.append('notes', formData.notes);
+      
+      // Add coordinates if selected (format to 5 decimal places)
+      if (formData.latitude !== null) submitData.append('latitude', Number(formData.latitude.toFixed(5)));
+      if (formData.longitude !== null) submitData.append('longitude', Number(formData.longitude.toFixed(5)));
+      
+      // Append photos using the correct field name expected by backend
+      formData.photos.forEach((photo) => {
+        submitData.append('uploaded_images', photo);
+      });
 
       await recycleAPI.submitScrapRequest(submitData);
       
