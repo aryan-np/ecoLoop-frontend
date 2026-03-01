@@ -55,8 +55,8 @@ const recycleAPI = {
       while (hasMore) {
         const response = await apiClient(`/api/recycle/categories/?page=${page}`);
         
-        // Handle new API response format with Result wrapper
-        const data = response?.Result || response;
+        // Handle new API response format with Result/result wrapper
+        const data = response?.Result || response?.result || response;
         
         // Handle response - check if it has results array
         if (data && Array.isArray(data.results)) {
@@ -85,6 +85,70 @@ const recycleAPI = {
       method: 'POST',
       body: data
     });
+  },
+
+  // Get scrap requests (for recyclers)
+  getScrapRequests: async (filters = {}) => {
+    try {
+      // Build query string from filters
+      const params = new URLSearchParams();
+      if (filters.category && filters.category !== 'all') {
+        params.append('category', filters.category);
+      }
+      if (filters.condition && filters.condition !== 'all') {
+        params.append('condition', filters.condition);
+      }
+      if (filters.weight_range && filters.weight_range !== 'all') {
+        params.append('weight_range', filters.weight_range);
+      }
+      
+      const queryString = params.toString();
+      const url = `/api/recycle/recycler/pending-requests/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiClient(url);
+      const data = response?.Result || response;
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch (error) {
+      console.error('Error fetching scrap requests:', error);
+      throw error;
+    }
+  },
+
+  // Get single scrap request detail by ID
+  getScrapRequestDetail: async (id) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/pending-requests/${id}/`);
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error fetching scrap request detail:', error);
+      throw error;
+    }
+  },
+
+  // Accept scrap request
+  acceptScrapRequest: async (id, data) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/pending-requests/${id}/accept/`, {
+        method: 'POST',
+        body: data
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error accepting scrap request:', error);
+      throw error;
+    }
+  },
+
+  // Get accepted requests (for pickup schedule)
+  getAcceptedRequests: async () => {
+    try {
+      const response = await apiClient('/api/recycle/recycler/accepted-requests/');
+      const data = response?.Result || response;
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch (error) {
+      console.error('Error fetching accepted requests:', error);
+      throw error;
+    }
   },
 };
 

@@ -118,8 +118,23 @@ export default function NGOLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm px-8 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+              <span className="text-purple-600 font-semibold text-sm">
+                {user?.full_name?.charAt(0).toUpperCase() || 'N'}
+              </span>
+            </div>
+            <span className="font-semibold text-gray-700">{user?.full_name || 'NGO User'}</span>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-auto bg-gray-50 p-8">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

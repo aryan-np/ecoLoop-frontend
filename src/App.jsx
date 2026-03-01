@@ -36,6 +36,9 @@ import NGOLayout from "./pages/ngo/NGOLayout";
 import NGODashboard from "./pages/ngo/NGODashboard";
 import RecyclerLayout from "./pages/recycler/RecyclerLayout";
 import RecyclerDashboard from "./pages/recycler/RecyclerDashboard";
+import ScrapRequests from "./pages/recycler/ScrapRequests";
+import ScrapRequestDetail from "./pages/recycler/ScrapRequestDetail";
+import PickupSchedule from "./pages/recycler/PickupSchedule";
 
 export default function App() {
   return (
@@ -114,8 +117,9 @@ function InnerApp() {
             {/* Recycler Routes */}
             <Route path="/recycler" element={<RecyclerLayout />}>
               <Route path="dashboard" element={<RecyclerDashboard />} />
-              <Route path="scrap-requests" element={<RecycleScrap />} />
-              <Route path="pickup-schedule" element={<RecycleScrap />} />
+              <Route path="scrap-requests" element={<ScrapRequests />} />
+              <Route path="scrap-requests/:id" element={<ScrapRequestDetail />} />
+              <Route path="pickup-schedule" element={<PickupSchedule />} />
               <Route path="completed-pickups" element={<RecycleScrap />} />
               <Route path="profile" element={<Profile />} />
             </Route>

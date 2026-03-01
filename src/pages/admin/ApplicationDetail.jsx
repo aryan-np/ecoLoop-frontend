@@ -93,7 +93,7 @@ const ApplicationDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-gray-600">Loading application...</div>
       </div>
     );
@@ -101,7 +101,7 @@ const ApplicationDetail = () => {
 
   if (!application) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-gray-600">Application not found</div>
       </div>
     );
@@ -116,7 +116,7 @@ const ApplicationDetail = () => {
   const currentStatus = statusConfig[application.status] || statusConfig.pending;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div>
       {toast.show && (
         <Toast
           message={toast.message}
