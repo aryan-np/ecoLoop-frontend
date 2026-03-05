@@ -1,10 +1,11 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import AuthContext from "../auth/AuthProvider";
 import logo from "../../logo.png";
 
 export default function NavBar() {
   const { isAuthenticated, logout, user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   return (

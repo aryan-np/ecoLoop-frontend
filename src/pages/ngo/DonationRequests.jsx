@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import recycleAPI from '../../api/recycle';
+import donationAPI from '../../api/donation';
 import Spinner from '../../components/Spinner';
 
-export default function ScrapRequests() {
+export default function DonationRequests() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [requests, setRequests] = useState([]);
@@ -12,7 +12,6 @@ export default function ScrapRequests() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [conditionFilter, setConditionFilter] = useState('all');
-  const [weightFilter, setWeightFilter] = useState('all');
 
   useEffect(() => {
     loadCategories();
@@ -22,11 +21,11 @@ export default function ScrapRequests() {
   useEffect(() => {
     // Reload requests when filters change (except search term which is frontend-only)
     loadRequests();
-  }, [categoryFilter, conditionFilter, weightFilter]);
+  }, [categoryFilter, conditionFilter]);
 
   const loadCategories = async () => {
     try {
-      const data = await recycleAPI.getCategories();
+      const data = await donationAPI.getAllCategories();
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error loading categories:', err);
@@ -38,41 +37,37 @@ export default function ScrapRequests() {
       setLoading(true);
       const filters = {
         category: categoryFilter,
-        condition: conditionFilter,
-        weight_range: weightFilter
+        condition: conditionFilter
       };
-      const data = await recycleAPI.getScrapRequests(filters);
-      console.log('Loaded requests:', data);
+      const data = await donationAPI.getNGOPendingRequests(filters);
+      console.log('Loaded donation requests:', data);
       setRequests(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error loading scrap requests:', err);
+      console.error('Error loading donation requests:', err);
       setRequests([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getCategoryColor = (materialType) => {
-    const type = materialType?.toLowerCase() || '';
-    if (type.includes('metal') || type.includes('aluminum') || type.includes('copper')) {
-      return 'text-gray-600';
+  const getCategoryColor = (categoryName) => {
+    const name = categoryName?.toLowerCase() || '';
+    if (name.includes('clothes') || name.includes('clothing')) {
+      return 'text-purple-600';
     }
-    if (type.includes('plastic')) {
-      return 'text-blue-600';
-    }
-    if (type.includes('paper')) {
+    if (name.includes('food')) {
       return 'text-green-600';
     }
+    if (name.includes('book')) {
+      return 'text-blue-600';
+    }
+    if (name.includes('furniture')) {
+      return 'text-amber-600';
+    }
+    if (name.includes('electronics')) {
+      return 'text-gray-600';
+    }
     return 'text-gray-600';
-  };
-
-  const getCategoryName = (materialType) => {
-    const type = materialType?.toLowerCase() || '';
-    if (type.includes('plastic')) return 'Plastic';
-    if (type.includes('paper')) return 'Paper';
-    if (type.includes('metal') || type.includes('aluminum') || type.includes('copper') || type.includes('iron') || type.includes('steel')) return 'Metal';
-    if (type.includes('glass')) return 'Glass';
-    return materialType || 'Other';
   };
 
   const formatDate = (dateString) => {
@@ -99,8 +94,8 @@ export default function ScrapRequests() {
     <div className="bg-gray-50 p-6 min-h-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Scrap Requests</h1>
-        <p className="text-gray-600 mt-2">Manage and track all incoming recycling requests</p>
+        <h1 className="text-3xl font-bold text-gray-900">Donation Requests</h1>
+        <p className="text-gray-600 mt-2">Manage and track all incoming donation requests</p>
       </div>
 
       {/* Filters and View Toggle */}
@@ -120,7 +115,7 @@ export default function ScrapRequests() {
                 placeholder="Search by user name or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
@@ -128,12 +123,12 @@ export default function ScrapRequests() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             >
               <option value="all">All Categories</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.material_type}
+                  {category.name}
                 </option>
               ))}
             </select>
@@ -142,23 +137,12 @@ export default function ScrapRequests() {
             <select
               value={conditionFilter}
               onChange={(e) => setConditionFilter(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             >
               <option value="all">All Conditions</option>
-              <option value="clean">Clean</option>
-              <option value="mixed">Mixed</option>
-            </select>
-
-            {/* Weight Filter */}
-            <select
-              value={weightFilter}
-              onChange={(e) => setWeightFilter(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
-            >
-              <option value="all">Any Weight</option>
-              <option value="0-10">0-10 kg</option>
-              <option value="10-20">10-20 kg</option>
-              <option value="20+">20+ kg</option>
+              <option value="1">Good</option>
+              <option value="2">Fair</option>
+              <option value="3">Poor</option>
             </select>
           </div>
 
@@ -168,7 +152,7 @@ export default function ScrapRequests() {
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded transition ${
                 viewMode === 'grid'
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               title="Grid View"
@@ -181,7 +165,7 @@ export default function ScrapRequests() {
               onClick={() => setViewMode('list')}
               className={`p-2 rounded transition ${
                 viewMode === 'list'
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               title="List View"
@@ -200,7 +184,7 @@ export default function ScrapRequests() {
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
-          <p className="text-gray-500 text-lg">No scrap requests found</p>
+          <p className="text-gray-500 text-lg">No donation requests found</p>
           <p className="text-gray-400 text-sm mt-2">Try adjusting your filters</p>
         </div>
       ) : (
@@ -215,8 +199,9 @@ export default function ScrapRequests() {
             const imageUrl = request.images && request.images.length > 0 
               ? request.images[0].image 
               : null;
-            const categoryName = getCategoryName(request.category_details?.material_type);
+            const categoryName = request.category_details?.name || 'Unknown';
             const userName = request.user_details?.full_name || 'Unknown User';
+            const conditionName = request.condition_details?.name || 'Unknown';
             
             return (
               <div
@@ -233,12 +218,12 @@ export default function ScrapRequests() {
                     />
                   </div>
                 ) : (
-                  <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                  <div className="relative h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
                     <div className="text-center">
-                      <svg className="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-16 h-16 text-purple-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <p className="text-gray-500 text-sm">No image available</p>
+                      <p className="text-purple-500 text-sm">No image available</p>
                     </div>
                   </div>
                 )}
@@ -251,7 +236,7 @@ export default function ScrapRequests() {
                       <h3 className="text-lg font-bold text-gray-900">
                         {userName}
                       </h3>
-                      <p className={`text-base font-semibold mt-1 ${getCategoryColor(request.category_details?.material_type)}`}>
+                      <p className={`text-base font-semibold mt-1 ${getCategoryColor(categoryName)}`}>
                         {categoryName}
                       </p>
                     </div>
@@ -260,13 +245,23 @@ export default function ScrapRequests() {
 
                   {/* Details */}
                   <div className="space-y-2.5 mb-4">
-                    {/* Weight */}
+                    {/* Quantity */}
                     <div className="flex items-center gap-2 text-gray-700">
                       <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
                       </svg>
                       <span className="text-sm">
-                        Estimated: <span className="font-semibold">{request.weight_kg} kg</span>
+                        Quantity: <span className="font-semibold">{request.quantity}</span>
+                      </span>
+                    </div>
+
+                    {/* Condition */}
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                      </svg>
+                      <span className="text-sm">
+                        Condition: <span className="font-semibold">{conditionName}</span>
                       </span>
                     </div>
 
@@ -277,16 +272,6 @@ export default function ScrapRequests() {
                       </svg>
                       <span className="text-sm truncate">{request.pickup_address}</span>
                     </div>
-
-                    {/* Time Slot */}
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                      </svg>
-                      <span className="text-sm">
-                        Time: <span className="font-semibold capitalize">{request.preferred_time_slot}</span>
-                      </span>
-                    </div>
                   </div>
 
                   {/* Footer */}
@@ -295,8 +280,8 @@ export default function ScrapRequests() {
                       Posted on {formatDate(request.request_date)}
                     </span>
                     <button 
-                      onClick={() => navigate(`/recycler/scrap-requests/${request.id}`)}
-                      className="px-4 py-2 text-sm font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition"
+                      onClick={() => navigate(`/ngo/donation-requests/${request.id}`)}
+                      className="px-4 py-2 text-sm font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition"
                     >
                       View Details →
                     </button>

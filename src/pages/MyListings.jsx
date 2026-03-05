@@ -20,6 +20,7 @@ export default function MyListings() {
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState("available");
   const [updating, setUpdating] = useState(null);
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -96,15 +97,25 @@ export default function MyListings() {
     navigate(`/products/${productId}/edit`);
   };
 
-  // Filter products by status
+  // Filter products by status and type
   const filteredListings = listings.filter((item) => {
     const status = (item.status || "available").toLowerCase();
     // For scrap and donation, "Pending" should be treated as "available"
     if (item.item_type === "scrap" || item.item_type === "donation") {
       const mappedStatus = status === "pending" ? "available" : status;
-      return mappedStatus === activeTab;
+      if (mappedStatus !== activeTab) return false;
+    } else {
+      if (status !== activeTab) return false;
     }
-    return status === activeTab;
+    
+    // Apply type filter only on Active tab
+    if (activeTab === "available") {
+      if (typeFilter === "all") return true;
+      if (typeFilter === "product") return item.item_type === "product" || !item.item_type;
+      return item.item_type === typeFilter;
+    }
+    
+    return true;
   });
 
   // Count products by status
@@ -118,6 +129,22 @@ export default function MyListings() {
       }
       return itemStatus === status;
     }).length;
+  };
+
+  // Count items by type (only for available/active items)
+  const getTypeCount = (type) => {
+    const availableItems = listings.filter((item) => {
+      const status = (item.status || "available").toLowerCase();
+      if (item.item_type === "scrap" || item.item_type === "donation") {
+        const mappedStatus = status === "pending" ? "available" : status;
+        return mappedStatus === "available";
+      }
+      return status === "available";
+    });
+    
+    if (type === "all") return availableItems.length;
+    if (type === "product") return availableItems.filter(item => item.item_type === "product" || !item.item_type).length;
+    return availableItems.filter(item => item.item_type === type).length;
   };
 
   const STATUS_TABS = [
@@ -137,7 +164,7 @@ export default function MyListings() {
         badgeColor: "bg-teal-600 text-white",
         price: `NPR ${(parseFloat(item.weight_kg || 0) * parseFloat(item.category_details?.rate_per_kg || 0)).toFixed(2)}`,
         location: item.pickup_address,
-        image: null,
+        image: item.images && item.images.length > 0 ? item.images[0].image : null,
         description: `Pickup: ${item.preferred_time_slot || 'N/A'} | Condition: ${item.condition || 'N/A'}`,
       };
     } else if (item.item_type === "donation") {
@@ -148,7 +175,7 @@ export default function MyListings() {
         badgeColor: "bg-purple-600 text-white",
         price: "Free",
         location: item.pickup_address,
-        image: null,
+        image: item.images && item.images.length > 0 ? item.images[0].image : null,
         description: item.notes || "No additional notes",
       };
     } else {
@@ -173,21 +200,48 @@ export default function MyListings() {
       {/* Header */}
       <h1 className="text-3xl font-bold text-gray-900 mb-8">My Listings</h1>
 
-      {/* Status Tabs */}
-      <div className="border-b border-gray-200 mb-6 flex gap-8">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition ${
-              activeTab === tab.key
-                ? "border-green-600 text-green-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            {tab.label} ({tab.count})
-          </button>
-        ))}
+      {/* Status Tabs with Type Filter */}
+      <div className="border-b border-gray-200 mb-6 flex items-center justify-between">
+        {/* Type Filter Dropdown - Only visible on Active tab */}
+        <div className="flex-shrink-0">
+          {activeTab === "available" ? (
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="all">All Types ({getTypeCount("all")})</option>
+              <option value="product">Sell ({getTypeCount("product")})</option>
+              <option value="donation">Donation ({getTypeCount("donation")})</option>
+              <option value="scrap">Scrap ({getTypeCount("scrap")})</option>
+            </select>
+          ) : (
+            <div className="h-10"></div>
+          )}
+        </div>
+        
+        {/* Status Tabs */}
+        <div className="flex gap-8">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setActiveTab(tab.key);
+                // Reset type filter when switching tabs
+                if (tab.key !== "available") {
+                  setTypeFilter("all");
+                }
+              }}
+              className={`py-3 px-1 font-medium text-sm border-b-2 transition ${
+                activeTab === tab.key
+                  ? "border-green-600 text-green-600"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Products List */}

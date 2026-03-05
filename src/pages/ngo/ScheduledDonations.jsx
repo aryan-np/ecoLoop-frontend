@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import recycleAPI from '../../api/recycle';
+import donationAPI from '../../api/donation';
 import Spinner from '../../components/Spinner';
 import MapPreview from '../../components/MapPreview';
 
-export default function PickupSchedule() {
+export default function ScheduledDonations() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('list'); // 'grid' or 'list'
   const [requests, setRequests] = useState([]);
@@ -18,27 +18,33 @@ export default function PickupSchedule() {
   const loadRequests = async () => {
     try {
       setLoading(true);
-      const data = await recycleAPI.getAcceptedRequests();
-      console.log('Loaded accepted requests:', data);
+      const data = await donationAPI.getNGOAcceptedRequests();
+      console.log('Loaded accepted donations:', data);
       setRequests(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error loading accepted requests:', err);
+      console.error('Error loading accepted donations:', err);
       setRequests([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getCategoryColor = (materialType) => {
-    const type = materialType?.toLowerCase() || '';
-    if (type.includes('metal') || type.includes('aluminum') || type.includes('copper')) {
-      return 'text-gray-600 bg-gray-100';
+  const getCategoryColor = (categoryName) => {
+    const name = categoryName?.toLowerCase() || '';
+    if (name.includes('clothes') || name.includes('clothing')) {
+      return 'text-purple-600 bg-purple-100';
     }
-    if (type.includes('plastic')) {
+    if (name.includes('food')) {
+      return 'text-green-600 bg-green-100';
+    }
+    if (name.includes('book')) {
       return 'text-blue-600 bg-blue-100';
     }
-    if (type.includes('paper')) {
-      return 'text-green-600 bg-green-100';
+    if (name.includes('furniture')) {
+      return 'text-amber-600 bg-amber-100';
+    }
+    if (name.includes('electronics')) {
+      return 'text-gray-600 bg-gray-100';
     }
     return 'text-gray-600 bg-gray-100';
   };
@@ -61,17 +67,10 @@ export default function PickupSchedule() {
     return null;
   };
 
-  const getOfferedPrice = (offers) => {
-    if (offers && offers.length > 0) {
-      return parseFloat(offers[0].offered_price).toFixed(2);
-    }
-    return '0.00';
-  };
-
-  const handleStartPickup = (requestId) => {
-    // Navigate to detail or implement pickup start logic
-    console.log('Starting pickup for request:', requestId);
-    // TODO: Implement start pickup functionality
+  const handleCompletePickup = (requestId) => {
+    // Navigate to detail or implement pickup completion logic
+    console.log('Completing pickup for request:', requestId);
+    // TODO: Implement complete pickup functionality
   };
 
   const filteredRequests = requests.filter(request => {
@@ -93,8 +92,8 @@ export default function PickupSchedule() {
     <div className="bg-gray-50 p-6 min-h-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Pickup Schedule</h1>
-        <p className="text-gray-600 mt-2">Manage your accepted pickup requests</p>
+        <h1 className="text-3xl font-bold text-gray-900">Scheduled Donations</h1>
+        <p className="text-gray-600 mt-2">Manage your accepted donation pickups</p>
       </div>
 
       {/* Filters and View Toggle */}
@@ -113,7 +112,7 @@ export default function PickupSchedule() {
                 placeholder="Search by user name or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -124,7 +123,7 @@ export default function PickupSchedule() {
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded transition ${
                 viewMode === 'grid'
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               title="Grid View"
@@ -137,7 +136,7 @@ export default function PickupSchedule() {
               onClick={() => setViewMode('list')}
               className={`p-2 rounded transition ${
                 viewMode === 'list'
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               title="List View"
@@ -156,16 +155,15 @@ export default function PickupSchedule() {
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <p className="text-gray-500 text-lg">No accepted pickups scheduled</p>
-          <p className="text-gray-400 text-sm mt-2">Accept scrap requests to schedule pickups</p>
+          <p className="text-gray-500 text-lg">No scheduled donations</p>
+          <p className="text-gray-400 text-sm mt-2">Accept donation requests to schedule pickups</p>
         </div>
       ) : viewMode === 'list' ? (
         /* List View */
         <div className="space-y-4">
           {filteredRequests.map((request) => {
             const imageUrl = request.images && request.images.length > 0 ? request.images[0].image : null;
-            const pickupDate = getPickupDateFromOffers(request.recycler_offers);
-            const offeredPrice = getOfferedPrice(request.recycler_offers);
+            const pickupDate = getPickupDateFromOffers(request.ngo_offers);
 
             return (
               <div key={request.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-shadow overflow-hidden">
@@ -173,10 +171,10 @@ export default function PickupSchedule() {
                   {/* Image */}
                   <div className="md:w-48 h-48 bg-gray-200 flex-shrink-0">
                     {imageUrl ? (
-                      <img src={imageUrl} alt="Request" className="w-full h-full object-cover" />
+                      <img src={imageUrl} alt="Donation" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                        <svg className="w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
@@ -191,34 +189,30 @@ export default function PickupSchedule() {
                           <h3 className="text-xl font-bold text-gray-900">
                             {request.user_details?.full_name}
                           </h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(request.category_details?.material_type)}`}>
-                            {request.category_details?.material_type}
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(request.category_details?.name)}`}>
+                            {request.category_details?.name}
                           </span>
                         </div>
                         <p className="text-sm text-gray-500">Request #{request.id}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-teal-600">NPR {offeredPrice}</p>
-                        <p className="text-xs text-gray-500">Offered Price</p>
-                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {/* Weight & Condition */}
+                      {/* Quantity & Condition */}
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
                           <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
                           </svg>
-                          <span className="text-gray-600">Weight:</span>
-                          <span className="font-semibold">{request.weight_kg} kg</span>
+                          <span className="text-gray-600">Quantity:</span>
+                          <span className="font-semibold">{request.quantity}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                           <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
                           </svg>
                           <span className="text-gray-600">Condition:</span>
-                          <span className="font-semibold capitalize">{request.condition}</span>
+                          <span className="font-semibold">{request.condition_details?.name}</span>
                         </div>
                       </div>
 
@@ -260,13 +254,13 @@ export default function PickupSchedule() {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleStartPickup(request.id)}
-                        className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center gap-2"
+                        onClick={() => handleCompletePickup(request.id)}
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center gap-2"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        Start Pickup
+                        Complete Pickup
                       </button>
                     </div>
 
@@ -290,18 +284,17 @@ export default function PickupSchedule() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRequests.map((request) => {
             const imageUrl = request.images && request.images.length > 0 ? request.images[0].image : null;
-            const pickupDate = getPickupDateFromOffers(request.recycler_offers);
-            const offeredPrice = getOfferedPrice(request.recycler_offers);
+            const pickupDate = getPickupDateFromOffers(request.ngo_offers);
 
             return (
               <div key={request.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-shadow overflow-hidden">
                 {/* Image */}
                 <div className="relative h-48 bg-gray-200">
                   {imageUrl ? (
-                    <img src={imageUrl} alt="Request" className="w-full h-full object-cover" />
+                    <img src={imageUrl} alt="Donation" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                      <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -314,19 +307,19 @@ export default function PickupSchedule() {
                     <h3 className="text-lg font-bold text-gray-900 mb-1">
                       {request.user_details?.full_name}
                     </h3>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(request.category_details?.material_type)}`}>
-                      {request.category_details?.material_type}
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(request.category_details?.name)}`}>
+                      {request.category_details?.name}
                     </span>
                   </div>
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Weight:</span>
-                      <span className="font-semibold">{request.weight_kg} kg</span>
+                      <span className="text-gray-600">Quantity:</span>
+                      <span className="font-semibold">{request.quantity}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Offered Price:</span>
-                      <span className="font-bold text-teal-600">NPR {offeredPrice}</span>
+                      <span className="text-gray-600">Condition:</span>
+                      <span className="font-semibold">{request.condition_details?.name}</span>
                     </div>
                     <div className="flex items-start gap-2 text-sm">
                       <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -345,13 +338,13 @@ export default function PickupSchedule() {
                   </div>
 
                   <button
-                    onClick={() => handleStartPickup(request.id)}
-                    className="w-full px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center justify-center gap-2"
+                    onClick={() => handleCompletePickup(request.id)}
+                    className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Start Pickup
+                    Complete Pickup
                   </button>
 
                   {/* Map Location */}

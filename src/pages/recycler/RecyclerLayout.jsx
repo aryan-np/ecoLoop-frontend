@@ -94,17 +94,8 @@ export default function RecyclerLayout() {
           ))}
         </nav>
 
-        {/* Back to Platform & Logout */}
+        {/* Actions */}
         <div className="border-t border-cyan-100 p-4">
-          <button
-            onClick={() => navigate('/products')}
-            className="w-full flex items-center gap-2 px-4 py-2 text-teal-800 hover:bg-cyan-100 rounded-lg transition mb-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span className="font-medium">Back to Platform</span>
-          </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
@@ -118,8 +109,28 @@ export default function RecyclerLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                <span className="text-teal-600 font-semibold text-sm">
+                  {user?.full_name?.charAt(0).toUpperCase() || 'R'}
+                </span>
+              </div>
+              <span className="font-semibold text-gray-700">{user?.full_name || 'Recycler User'}</span>
+            </div>
+            <span className="inline-block px-3 py-1 bg-teal-600 text-white text-xs font-semibold rounded-full">
+              Verified Recycler
+            </span>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-auto bg-gray-50 p-8">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

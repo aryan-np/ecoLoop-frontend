@@ -146,10 +146,8 @@ export default function RecycleScrap() {
 
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Recycle Scrap</h1>
-        <p className="text-gray-600">
-          Check current scrap rates and sell your recyclable waste responsibly.
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">Recycle Scrap</h1>
+        <p className="text-gray-600 mt-2">Check current scrap rates and sell your recyclable waste responsibly</p>
       </div>
 
       {/* Current Scrap Rates */}

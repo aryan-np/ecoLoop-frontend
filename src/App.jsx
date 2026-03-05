@@ -34,6 +34,9 @@ import SystemLogs from "./pages/admin/SystemLogs";
 import Settings from "./pages/admin/Settings";
 import NGOLayout from "./pages/ngo/NGOLayout";
 import NGODashboard from "./pages/ngo/NGODashboard";
+import DonationRequests from "./pages/ngo/DonationRequests";
+import DonationRequestDetail from "./pages/ngo/DonationRequestDetail";
+import ScheduledDonations from "./pages/ngo/ScheduledDonations";
 import RecyclerLayout from "./pages/recycler/RecyclerLayout";
 import RecyclerDashboard from "./pages/recycler/RecyclerDashboard";
 import ScrapRequests from "./pages/recycler/ScrapRequests";
@@ -108,8 +111,9 @@ function InnerApp() {
             {/* NGO Routes */}
             <Route path="/ngo" element={<NGOLayout />}>
               <Route path="dashboard" element={<NGODashboard />} />
-              <Route path="donation-requests" element={<DonateItems />} />
-              <Route path="received-donations" element={<DonateItems />} />
+              <Route path="donation-requests" element={<DonationRequests />} />
+              <Route path="donation-requests/:id" element={<DonationRequestDetail />} />
+              <Route path="received-donations" element={<ScheduledDonations />} />
               <Route path="impact-report" element={<Impact />} />
               <Route path="profile" element={<Profile />} />
             </Route>

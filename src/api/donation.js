@@ -96,6 +96,66 @@ const donationAPI = {
       body: data
     });
   },
+
+  // NGO: Get pending donation requests
+  getNGOPendingRequests: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.category && filters.category !== 'all') {
+        params.append('category', filters.category);
+      }
+      if (filters.condition && filters.condition !== 'all') {
+        params.append('condition', filters.condition);
+      }
+      
+      const queryString = params.toString();
+      const url = `/api/donations/ngo/pending-requests/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiClient(url);
+      const data = response?.Result || response;
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch (error) {
+      console.error('Error fetching NGO pending requests:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Get single donation request detail by ID
+  getNGORequestDetail: async (id) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/pending-requests/${id}/`);
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error fetching donation request detail:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Accept donation request
+  acceptDonationRequest: async (id, data) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/pending-requests/${id}/accept/`, {
+        method: 'POST',
+        body: data
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error accepting donation request:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Get accepted requests (for scheduled donations)
+  getNGOAcceptedRequests: async () => {
+    try {
+      const response = await apiClient('/api/donations/ngo/accepted-requests/');
+      const data = response?.Result || response;
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch (error) {
+      console.error('Error fetching accepted donation requests:', error);
+      throw error;
+    }
+  },
 };
 
 export default donationAPI;

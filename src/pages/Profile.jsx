@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AuthContext from "../auth/AuthProvider";
 import authAPI from "../api/auth";
 import apiClient from "../api/client";
@@ -8,6 +8,7 @@ import { getErrorMessage } from "../utils/errorHandler";
 
 export default function Profile() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -160,15 +161,26 @@ export default function Profile() {
   // Check if user already has Recycler or NGO role
   const hasRecyclerRole = profile?.roles?.some(role => role.name === "RECYCLER");
   const hasNGORole = profile?.roles?.some(role => role.name === "NGO");
+  const hasAdminRole = profile?.roles?.some(role => role.name === "ADMIN");
+  
+  // Check if currently in a panel
+  const isInRecyclerPanel = location.pathname.startsWith('/recycler');
+  const isInNGOPanel = location.pathname.startsWith('/ngo');
+  const isInAdminPanel = location.pathname.startsWith('/admin');
+  const isInPanel = isInRecyclerPanel || isInNGOPanel || isInAdminPanel;
   
   // Use API flags for application status
-  const canApplyRecycler = profile?.can_apply_recycler ?? false;
-  const canApplyNGO = profile?.can_apply_ngo ?? false;
+  // Default to true (can apply) unless API explicitly says false
+  const canApplyRecycler = profile?.can_apply_recycler ?? true;
+  const canApplyNGO = profile?.can_apply_ngo ?? true;
   const hasAppliedRecycler = profile?.has_applied_recycler ?? false;
   const hasAppliedNGO = profile?.has_applied_ngo ?? false;
   
-  // Show application section if user doesn't have roles AND hasn't been rejected (can still apply)
-  const showApplicationSection = !hasRecyclerRole && !hasNGORole && (canApplyRecycler || canApplyNGO || hasAppliedRecycler || hasAppliedNGO);
+  // Show application section for roles not yet obtained
+  // Show if user doesn't have the role AND (can apply OR has already applied)
+  const showRecyclerApplication = !hasRecyclerRole && (canApplyRecycler || hasAppliedRecycler);
+  const showNGOApplication = !hasNGORole && (canApplyNGO || hasAppliedNGO);
+  const showApplicationSection = showRecyclerApplication || showNGOApplication;
 
   const handleApplyClick = (type) => {
     const hasApplied = type === "recycler" ? hasAppliedRecycler : hasAppliedNGO;
@@ -393,15 +405,15 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Apply for Verified Role */}
+          {/* Apply for Verified Role or Access Panels */}
           {showApplicationSection && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Apply for Verified Role</h2>
               <p className="text-gray-600 text-sm mb-6">Upgrade your account to become a verified Recycler or NGO</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Recycler Card */}
-                {(canApplyRecycler || hasAppliedRecycler) && (
+                {/* Recycler Card - Only show if user doesn't have Recycler role */}
+                {showRecyclerApplication && (
                   <div className="border border-gray-200 rounded-lg p-6 hover:border-green-400 hover:shadow-md transition">
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
@@ -431,8 +443,8 @@ export default function Profile() {
                   </div>
                 )}
 
-                {/* NGO Card */}
-                {(canApplyNGO || hasAppliedNGO) && (
+                {/* NGO Card - Only show if user doesn't have NGO role */}
+                {showNGOApplication && (
                   <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-md transition">
                     <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
@@ -462,6 +474,113 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Access Verified Panels / Open Platform */}
+          {(hasRecyclerRole || hasNGORole || hasAdminRole) && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                {isInPanel ? "Quick Navigation" : "Access Verified Panels"}
+              </h2>
+              <p className="text-gray-600 text-sm mb-6">
+                {isInPanel ? "Return to main platform" : "Manage your verified accounts"}
+              </p>
+
+              {isInPanel ? (
+                <button
+                  onClick={() => navigate('/products')}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition shadow-md"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  <span className="text-lg font-semibold">Open Platform</span>
+                </button>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Recycler Panel */}
+                {hasRecyclerRole && (
+                  <div className="border-2 border-green-300 bg-green-50 rounded-lg p-6 hover:border-green-400 hover:shadow-md transition">
+                    <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21,11C21,16.55 17.16,21.74 12,23C6.84,21.74 3,16.55 3,11V5L12,1L21,5V11M12,21C15.75,20 19,15.54 19,11.22V6.3L12,3.18L5,6.3V11.22C5,15.54 8.25,20 12,21M15.05,16L11.97,14.15L8.9,16L9.71,12.5L7.13,10.16L10.76,9.85L11.97,6.5L13.18,9.84L16.81,10.15L14.23,12.5L15.05,16Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Recycler Panel</h3>
+                    <p className="text-gray-600 text-sm mb-4">Manage scrap requests and pickups</p>
+                    <div className="mb-3 px-3 py-2 bg-green-100 border border-green-300 rounded-lg">
+                      <p className="text-xs text-green-800 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                        Verified Recycler
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/recycler/dashboard")}
+                      className="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+                    >
+                      Open Recycler Panel
+                    </button>
+                  </div>
+                )}
+
+                {/* NGO Panel */}
+                {hasNGORole && (
+                  <div className="border-2 border-purple-300 bg-purple-50 rounded-lg p-6 hover:border-purple-400 hover:shadow-md transition">
+                    <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.03C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">NGO Panel</h3>
+                    <p className="text-gray-600 text-sm mb-4">Manage donation requests and impact</p>
+                    <div className="mb-3 px-3 py-2 bg-purple-100 border border-purple-300 rounded-lg">
+                      <p className="text-xs text-purple-800 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                        Verified NGO
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/ngo/dashboard")}
+                      className="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition"
+                    >
+                      Open NGO Panel
+                    </button>
+                  </div>
+                )}
+                
+                {/* Admin Panel */}
+                {hasAdminRole && (
+                  <div className="border-2 border-red-300 bg-red-50 rounded-lg p-6 hover:border-red-400 hover:shadow-md transition">
+                    <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M17.13,17C15.92,18.85 14.11,20.24 12,20.92C9.89,20.24 8.08,18.85 6.87,17C6.53,16.5 6.24,16 6,15.47C6,13.82 8.71,12.47 12,12.47C15.29,12.47 18,13.79 18,15.47C17.76,16 17.47,16.5 17.13,17Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Admin Panel</h3>
+                    <p className="text-gray-600 text-sm mb-4">Manage system and users</p>
+                    <div className="mb-3 px-3 py-2 bg-red-100 border border-red-300 rounded-lg">
+                      <p className="text-xs text-red-800 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                        System Administrator
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/admin/dashboard")}
+                      className="w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+                    >
+                      Open Admin Panel
+                    </button>
+                  </div>
+                )}
+                </div>
+              )}
             </div>
           )}
 
