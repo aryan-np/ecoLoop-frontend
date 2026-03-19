@@ -28,9 +28,21 @@ export default function DonationRequestDetail() {
     try {
       setLoading(true);
       setError(null);
-      const data = await donationAPI.getNGORequestDetail(id);
-      console.log('Loaded donation request detail:', data);
-      setRequest(data);
+      try {
+        const data = await donationAPI.getNGORequestDetail(id);
+        console.log('Loaded donation request detail from pending endpoint:', data);
+        setRequest(data);
+      } catch (pendingError) {
+        try {
+          const acceptedData = await donationAPI.getNGOAcceptedRequestDetail(id);
+          console.log('Loaded donation request detail from accepted endpoint:', acceptedData);
+          setRequest(acceptedData);
+        } catch (acceptedError) {
+          const completedData = await donationAPI.getNGOCompletedRequestDetail(id);
+          console.log('Loaded donation request detail from completed endpoint:', completedData);
+          setRequest(completedData);
+        }
+      }
     } catch (err) {
       console.error('Error loading request detail:', err);
       setError('Failed to load request details. Please try again.');
@@ -38,6 +50,19 @@ export default function DonationRequestDetail() {
       setLoading(false);
     }
   };
+
+  const isCompletedRequest = (request?.status || '').toLowerCase() === 'completed';
+  const isAcceptedRequest = (request?.status || '').toLowerCase() === 'accepted';
+  const backPath = isCompletedRequest
+    ? '/ngo/completed-donations'
+    : isAcceptedRequest
+    ? '/ngo/accepted-donations'
+    : '/ngo/donation-requests';
+  const backLabel = isCompletedRequest
+    ? 'Back to Completed Donations'
+    : isAcceptedRequest
+    ? 'Back to Accepted Donations'
+    : 'Back to Requests';
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -160,13 +185,13 @@ export default function DonationRequestDetail() {
       <div className="bg-gray-50 p-6 min-h-full">
         <div className="max-w-4xl mx-auto">
           <button
-            onClick={() => navigate('/ngo/donation-requests')}
+            onClick={() => navigate(backPath)}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="font-medium">Back to Requests</span>
+            <span className="font-medium">{backLabel}</span>
           </button>
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <svg className="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +199,7 @@ export default function DonationRequestDetail() {
             </svg>
             <p className="text-red-600 text-lg mb-2">{error || 'Request not found'}</p>
             <button
-              onClick={() => navigate('/ngo/donation-requests')}
+              onClick={() => navigate(backPath)}
               className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
             >
               Go Back
@@ -198,13 +223,13 @@ export default function DonationRequestDetail() {
       <div className="max-w-6xl mx-auto">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/ngo/donation-requests')}
+          onClick={() => navigate(backPath)}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span className="font-medium">Back to Requests</span>
+          <span className="font-medium">{backLabel}</span>
         </button>
 
         {/* Header */}

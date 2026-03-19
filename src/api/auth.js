@@ -58,6 +58,9 @@ export const authAPI = {
 
   getMyApplications: () => 
     apiClient("/api/auth/role-applications/", { method: "GET" }),
+
+  getMyOrganization: () =>
+    apiClient("/api/auth/organization/", { method: "GET" }),
 };
 
 export default authAPI;

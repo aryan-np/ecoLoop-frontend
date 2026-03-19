@@ -150,6 +150,54 @@ const recycleAPI = {
       throw error;
     }
   },
+
+  // Get single accepted request detail by ID
+  getAcceptedRequestDetail: async (id) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/accepted-requests/${id}/`);
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error fetching accepted request detail:', error);
+      throw error;
+    }
+  },
+
+  // Complete accepted pickup request
+  completeAcceptedRequest: async (id, data = {}) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/accepted-requests/${id}/complete/`, {
+        method: 'POST',
+        body: data,
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error completing accepted request:', error);
+      throw error;
+    }
+  },
+
+  // Get completed requests (for completed pickups)
+  getCompletedRequests: async () => {
+    try {
+      const response = await apiClient('/api/recycle/recycler/completed-requests/');
+      const data = response?.Result || response;
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch (error) {
+      console.error('Error fetching completed requests:', error);
+      throw error;
+    }
+  },
+
+  // Get single completed request detail by ID
+  getCompletedRequestDetail: async (id) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/completed-requests/${id}/`);
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error fetching completed request detail:', error);
+      throw error;
+    }
+  },
 };
 
 export default recycleAPI;

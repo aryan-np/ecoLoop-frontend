@@ -1,10 +1,35 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import AuthContext from '../../auth/AuthProvider';
+import authAPI from '../../api/auth';
 
 export default function RecyclerLayout() {
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
+  const [organizationName, setOrganizationName] = useState('Recycler Organization');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadOrganization = async () => {
+      try {
+        const response = await authAPI.getMyOrganization();
+        if (!mounted) return;
+
+        const org = response?.Result || response?.result || response;
+        if (org?.name) {
+          setOrganizationName(org.name);
+        }
+      } catch (error) {
+      }
+    };
+
+    loadOrganization();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -51,6 +76,15 @@ export default function RecyclerLayout() {
     { 
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7a2 2 0 012-2h10a2 2 0 012 2v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1" />
+        </svg>
+      ),
+      label: 'My Organization',
+      path: '/recycler/organization'
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
@@ -68,7 +102,10 @@ export default function RecyclerLayout() {
           <h1 className="text-2xl font-bold text-teal-900">Recycler Panel</h1>
           <p className="text-sm text-teal-700 mt-1">{user?.full_name || 'Recycler User'}</p>
           <div className="mt-3">
-            <span className="inline-block px-3 py-1 bg-teal-600 text-white text-xs font-semibold rounded-full">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-600 text-white text-xs font-semibold rounded-full">
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+              </svg>
               Verified Recycler
             </span>
           </div>
@@ -121,8 +158,11 @@ export default function RecyclerLayout() {
               </div>
               <span className="font-semibold text-gray-700">{user?.full_name || 'Recycler User'}</span>
             </div>
-            <span className="inline-block px-3 py-1 bg-teal-600 text-white text-xs font-semibold rounded-full">
-              Verified Recycler
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-600 text-white text-xs font-semibold rounded-full">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7a2 2 0 012-2h10a2 2 0 012 2v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1" />
+              </svg>
+              {organizationName}
             </span>
           </div>
         </header>

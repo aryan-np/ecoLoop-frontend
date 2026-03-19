@@ -1,10 +1,35 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import AuthContext from '../../auth/AuthProvider';
+import authAPI from '../../api/auth';
 
 export default function NGOLayout() {
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
+  const [organizationName, setOrganizationName] = useState('NGO Organization');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadOrganization = async () => {
+      try {
+        const response = await authAPI.getMyOrganization();
+        if (!mounted) return;
+
+        const org = response?.Result || response?.result || response;
+        if (org?.name) {
+          setOrganizationName(org.name);
+        }
+      } catch (error) {
+      }
+    };
+
+    loadOrganization();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -36,19 +61,28 @@ export default function NGOLayout() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
       ),
-      label: 'Received Donations', 
-      path: '/ngo/received-donations' 
+      label: 'Accepted Donations', 
+      path: '/ngo/accepted-donations' 
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ),
+      label: 'Completed Donations',
+      path: '/ngo/completed-donations'
     },
     { 
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7a2 2 0 012-2h10a2 2 0 012 2v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1" />
         </svg>
       ),
-      label: 'Impact Report', 
-      path: '/ngo/impact-report' 
+      label: 'My Organization',
+      path: '/ngo/organization'
     },
-    { 
+    {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -68,8 +102,11 @@ export default function NGOLayout() {
           <h1 className="text-2xl font-bold text-purple-900">NGO Panel</h1>
           <p className="text-sm text-purple-700 mt-1">{user?.full_name || 'NGO User'}</p>
           <div className="mt-3">
-            <span className="inline-block px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full">
-              Verified NGO
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7a2 2 0 012-2h10a2 2 0 012 2v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1" />
+              </svg>
+              {organizationName}
             </span>
           </div>
         </div>
@@ -121,8 +158,11 @@ export default function NGOLayout() {
               </div>
               <span className="font-semibold text-gray-700">{user?.full_name || 'NGO User'}</span>
             </div>
-            <span className="inline-block px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full">
-              Verified NGO
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7a2 2 0 012-2h10a2 2 0 012 2v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1" />
+              </svg>
+              {organizationName}
             </span>
           </div>
         </header>

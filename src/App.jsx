@@ -4,6 +4,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
 import Profile from "./pages/Profile";
+import MyOrganization from "./pages/MyOrganization";
 import SellerProfile from "./pages/SellerProfile";
 import { AuthProvider } from "./auth/AuthProvider";
 import AuthContext from "./auth/AuthProvider";
@@ -36,12 +37,15 @@ import NGOLayout from "./pages/ngo/NGOLayout";
 import NGODashboard from "./pages/ngo/NGODashboard";
 import DonationRequests from "./pages/ngo/DonationRequests";
 import DonationRequestDetail from "./pages/ngo/DonationRequestDetail";
+import AcceptedDonations from "./pages/ngo/AcceptedDonations";
 import ScheduledDonations from "./pages/ngo/ScheduledDonations";
 import RecyclerLayout from "./pages/recycler/RecyclerLayout";
 import RecyclerDashboard from "./pages/recycler/RecyclerDashboard";
 import ScrapRequests from "./pages/recycler/ScrapRequests";
 import ScrapRequestDetail from "./pages/recycler/ScrapRequestDetail";
 import PickupSchedule from "./pages/recycler/PickupSchedule";
+import CompletedPickups from "./pages/recycler/CompletedPickups";
+import NavigatePickup from "./pages/NavigatePickup";
 
 export default function App() {
   return (
@@ -113,8 +117,10 @@ function InnerApp() {
               <Route path="dashboard" element={<NGODashboard />} />
               <Route path="donation-requests" element={<DonationRequests />} />
               <Route path="donation-requests/:id" element={<DonationRequestDetail />} />
-              <Route path="received-donations" element={<ScheduledDonations />} />
-              <Route path="impact-report" element={<Impact />} />
+              <Route path="accepted-donations" element={<AcceptedDonations />} />
+              <Route path="navigate-pickup/:id" element={<NavigatePickup />} />
+              <Route path="completed-donations" element={<ScheduledDonations />} />
+              <Route path="organization" element={<MyOrganization />} />
               <Route path="profile" element={<Profile />} />
             </Route>
 
@@ -124,7 +130,9 @@ function InnerApp() {
               <Route path="scrap-requests" element={<ScrapRequests />} />
               <Route path="scrap-requests/:id" element={<ScrapRequestDetail />} />
               <Route path="pickup-schedule" element={<PickupSchedule />} />
-              <Route path="completed-pickups" element={<RecycleScrap />} />
+              <Route path="navigate-pickup/:id" element={<NavigatePickup />} />
+              <Route path="completed-pickups" element={<CompletedPickups />} />
+              <Route path="organization" element={<MyOrganization />} />
               <Route path="profile" element={<Profile />} />
             </Route>
           </Routes>

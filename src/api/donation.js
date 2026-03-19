@@ -156,6 +156,54 @@ const donationAPI = {
       throw error;
     }
   },
+
+  // NGO: Get single accepted request detail by ID
+  getNGOAcceptedRequestDetail: async (id) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/accepted-requests/${id}/`);
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error fetching accepted donation request detail:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Complete accepted request
+  completeNGOAcceptedRequest: async (id, data = {}) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/accepted-requests/${id}/complete/`, {
+        method: 'POST',
+        body: data,
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error completing accepted donation request:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Get completed requests
+  getNGOCompletedRequests: async () => {
+    try {
+      const response = await apiClient('/api/donations/ngo/completed-requests/');
+      const data = response?.Result || response;
+      return Array.isArray(data) ? data : data?.results || [];
+    } catch (error) {
+      console.error('Error fetching completed donation requests:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Get single completed request detail by ID
+  getNGOCompletedRequestDetail: async (id) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/completed-requests/${id}/`);
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error fetching completed donation request detail:', error);
+      throw error;
+    }
+  },
 };
 
 export default donationAPI;

@@ -29,9 +29,15 @@ export default function ScrapRequestDetail() {
     try {
       setLoading(true);
       setError(null);
-      const data = await recycleAPI.getScrapRequestDetail(id);
-      console.log('Loaded request detail:', data);
-      setRequest(data);
+      try {
+        const data = await recycleAPI.getScrapRequestDetail(id);
+        console.log('Loaded request detail from pending endpoint:', data);
+        setRequest(data);
+      } catch (pendingError) {
+        const completedData = await recycleAPI.getCompletedRequestDetail(id);
+        console.log('Loaded request detail from completed endpoint:', completedData);
+        setRequest(completedData);
+      }
     } catch (err) {
       console.error('Error loading request detail:', err);
       setError('Failed to load request details. Please try again.');
@@ -39,6 +45,11 @@ export default function ScrapRequestDetail() {
       setLoading(false);
     }
   };
+
+  const isPendingRequest = (request?.status || '').toLowerCase() === 'pending';
+  const isCompletedRequest = (request?.status || '').toLowerCase() === 'completed';
+  const backPath = isCompletedRequest ? '/recycler/completed-pickups' : '/recycler/scrap-requests';
+  const backLabel = isCompletedRequest ? 'Back to Completed Pickups' : 'Back to Requests';
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -164,13 +175,13 @@ export default function ScrapRequestDetail() {
       <div className="bg-gray-50 p-6 min-h-full">
         <div className="max-w-4xl mx-auto">
           <button
-            onClick={() => navigate('/recycler/scrap-requests')}
+            onClick={() => navigate(backPath)}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="font-medium">Back to Requests</span>
+            <span className="font-medium">{backLabel}</span>
           </button>
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <svg className="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +189,7 @@ export default function ScrapRequestDetail() {
             </svg>
             <p className="text-red-600 text-lg mb-2">{error || 'Request not found'}</p>
             <button
-              onClick={() => navigate('/recycler/scrap-requests')}
+              onClick={() => navigate(backPath)}
               className="mt-4 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
             >
               Go Back
@@ -202,13 +213,13 @@ export default function ScrapRequestDetail() {
       <div className="max-w-6xl mx-auto">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/recycler/scrap-requests')}
+          onClick={() => navigate(backPath)}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span className="font-medium">Back to Requests</span>
+          <span className="font-medium">{backLabel}</span>
         </button>
 
         {/* Header */}
@@ -225,17 +236,19 @@ export default function ScrapRequestDetail() {
               </div>
               <p className="text-gray-600">Submitted on {formatDate(request.request_date)}</p>
             </div>
-            <div>
-              <button 
-                onClick={handleAcceptClick}
-                className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Accept Request
-              </button>
-            </div>
+            {isPendingRequest && (
+              <div>
+                <button 
+                  onClick={handleAcceptClick}
+                  className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Accept Request
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

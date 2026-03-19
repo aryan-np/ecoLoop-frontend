@@ -55,3 +55,10 @@
   .form-row { @apply space-y-3 }
   .section { background-color: var(--section); padding: 1.5rem; border-radius: .5rem; }
 }
+
+/* Keep all Leaflet layers inside their own stacking context so modals/dropdowns stay above maps */
+.leaflet-container {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}

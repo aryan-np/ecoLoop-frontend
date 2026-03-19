@@ -18,11 +18,11 @@ export default function ScheduledDonations() {
   const loadRequests = async () => {
     try {
       setLoading(true);
-      const data = await donationAPI.getNGOAcceptedRequests();
-      console.log('Loaded accepted donations:', data);
+      const data = await donationAPI.getNGOCompletedRequests();
+      console.log('Loaded completed donations:', data);
       setRequests(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error loading accepted donations:', err);
+      console.error('Error loading completed donations:', err);
       setRequests([]);
     } finally {
       setLoading(false);
@@ -67,10 +67,8 @@ export default function ScheduledDonations() {
     return null;
   };
 
-  const handleCompletePickup = (requestId) => {
-    // Navigate to detail or implement pickup completion logic
-    console.log('Completing pickup for request:', requestId);
-    // TODO: Implement complete pickup functionality
+  const handleViewDetails = (requestId) => {
+    navigate(`/ngo/donation-requests/${requestId}`);
   };
 
   const filteredRequests = requests.filter(request => {
@@ -92,8 +90,8 @@ export default function ScheduledDonations() {
     <div className="bg-gray-50 p-6 min-h-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Scheduled Donations</h1>
-        <p className="text-gray-600 mt-2">Manage your accepted donation pickups</p>
+        <h1 className="text-3xl font-bold text-gray-900">Completed Donations</h1>
+        <p className="text-gray-600 mt-2">All fulfilled donation pickups in one place</p>
       </div>
 
       {/* Filters and View Toggle */}
@@ -155,8 +153,8 @@ export default function ScheduledDonations() {
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <p className="text-gray-500 text-lg">No scheduled donations</p>
-          <p className="text-gray-400 text-sm mt-2">Accept donation requests to schedule pickups</p>
+          <p className="text-gray-500 text-lg">No completed donations found</p>
+          <p className="text-gray-400 text-sm mt-2">Completed donation pickups will appear here</p>
         </div>
       ) : viewMode === 'list' ? (
         /* List View */
@@ -254,13 +252,13 @@ export default function ScheduledDonations() {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleCompletePickup(request.id)}
+                        onClick={() => handleViewDetails(request.id)}
                         className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center gap-2"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                        Complete Pickup
+                        View Details
                       </button>
                     </div>
 
@@ -338,13 +336,13 @@ export default function ScheduledDonations() {
                   </div>
 
                   <button
-                    onClick={() => handleCompletePickup(request.id)}
+                    onClick={() => handleViewDetails(request.id)}
                     className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    Complete Pickup
+                    View Details
                   </button>
 
                   {/* Map Location */}
