@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import recycleAPI from '../../api/recycle';
 import Spinner from '../../components/Spinner';
 import MapPreview from '../../components/MapPreview';
+import Toast from '../../components/Toast';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 export default function PickupSchedule() {
   const navigate = useNavigate();
@@ -10,6 +12,8 @@ export default function PickupSchedule() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [completingId, setCompletingId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     loadRequests();
@@ -70,6 +74,27 @@ export default function PickupSchedule() {
 
   const handleStartPickup = (requestId) => {
     navigate(`/recycler/navigate-pickup/${requestId}`);
+  };
+
+  const handleCompletePickup = async (requestId) => {
+    const confirmed = window.confirm('Mark this accepted pickup as completed?');
+    if (!confirmed) return;
+
+    try {
+      setCompletingId(requestId);
+      await recycleAPI.completeAcceptedRequest(requestId, {});
+      setRequests((prev) => prev.filter((request) => request.id !== requestId));
+      setToast({ type: 'success', message: 'Pickup marked as completed.', key: Date.now() });
+    } catch (err) {
+      console.error('Error completing accepted request:', err);
+      setToast({
+        type: 'error',
+        message: getErrorMessage(err, 'Failed to complete pickup. Please try again.'),
+        key: Date.now(),
+      });
+    } finally {
+      setCompletingId(null);
+    }
   };
 
   const filteredRequests = requests.filter(request => {
@@ -257,15 +282,25 @@ export default function PickupSchedule() {
                           {request.user_details?.phone_number}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleStartPickup(request.id)}
-                        className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center gap-2"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        Start Pickup
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCompletePickup(request.id)}
+                          disabled={completingId === request.id}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {completingId === request.id ? 'Completing...' : 'Complete Pickup'}
+                        </button>
+                        <button
+                          onClick={() => handleStartPickup(request.id)}
+                          disabled={completingId === request.id}
+                          className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Start Pickup
+                        </button>
+                      </div>
                     </div>
 
                     {/* Map Location */}
@@ -342,15 +377,25 @@ export default function PickupSchedule() {
                     )}
                   </div>
 
-                  <button
-                    onClick={() => handleStartPickup(request.id)}
-                    className="w-full px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Start Pickup
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleCompletePickup(request.id)}
+                      disabled={completingId === request.id}
+                      className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {completingId === request.id ? 'Completing...' : 'Complete'}
+                    </button>
+                    <button
+                      onClick={() => handleStartPickup(request.id)}
+                      disabled={completingId === request.id}
+                      className="px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Start
+                    </button>
+                  </div>
 
                   {/* Map Location */}
                   {request.latitude && request.longitude && (
@@ -366,6 +411,15 @@ export default function PickupSchedule() {
             );
           })}
         </div>
+      )}
+
+      {toast && (
+        <Toast
+          key={toast.key}
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
