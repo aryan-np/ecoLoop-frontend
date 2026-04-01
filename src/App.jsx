@@ -46,6 +46,7 @@ import ScrapRequestDetail from "./pages/recycler/ScrapRequestDetail";
 import PickupSchedule from "./pages/recycler/PickupSchedule";
 import CompletedPickups from "./pages/recycler/CompletedPickups";
 import NavigatePickup from "./pages/NavigatePickup";
+import PaymentCallback from "./pages/PaymentCallback";
 
 export default function App() {
   return (
@@ -99,7 +100,8 @@ function InnerApp() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/products/:id/edit" element={<ProductForm />} />
             <Route path="/seller/:userId" element={<SellerProfile />} />
-            
+            <Route path="/payment/callback" element={<PaymentCallback />} />
+
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
@@ -153,6 +155,7 @@ function InnerApp() {
             <Route path="/recycle/submit" element={<ScrapRequestForm />} />
             <Route path="/donate" element={<DonateItems />} />
             <Route path="/donate/form" element={<DonationForm />} />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
           </Routes>
         </main>
       )}

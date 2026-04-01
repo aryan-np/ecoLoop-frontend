@@ -8,6 +8,7 @@ import ImageCarousel from "../components/ImageCarousel";
 import ReportModal from "../components/ReportModal";
 import MapPreview from "../components/MapPreview";
 import { getErrorMessage } from "../utils/errorHandler";
+import KhaltiPayButton from "../components/KhaltiPayButton";
 
 function getName(v) {
   if (!v) return "";
@@ -276,6 +277,22 @@ export default function ProductDetail() {
                   </svg>
                   Save to Favorites
                 </button>
+
+                {/* Khalti Pay — show for any priced listing that isn't donate/recycle */}
+                {normalized.product_type !== "donate" &&
+                  normalized.product_type !== "recycle" &&
+                  normalized.status !== "sold" &&
+                  !normalized.is_free &&
+                  normalized.price && (
+                    <KhaltiPayButton
+                      listing={normalized}
+                      onError={(err) => {
+                        if (!err?.isUnauthorized) {
+                          setToast({ type: "error", message: getErrorMessage(err, "Payment failed."), key: Date.now() });
+                        }
+                      }}
+                    />
+                  )}
               </div>
             )}
           </div>
