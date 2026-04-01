@@ -6,7 +6,7 @@ export async function getThreads() {
 }
 
 export async function getMessages(threadId, page = null) {
-  let url = `/api/communications/messages?thread_id=${threadId}`;
+  let url = `/api/communications/messages/?thread_id=${threadId}`;
   if (page) url += `&page=${page}`;
 
   const result = await apiClient(url, { method: "GET" });
@@ -32,6 +32,15 @@ export async function sendMessage(threadId, message) {
       thread_id: threadId,
       message: message,
     },
+  });
+  return result?.Result || result;
+}
+
+export async function markMessagesRead(messageIds) {
+  if (!messageIds || messageIds.length === 0) return;
+  const result = await apiClient("/api/communications/messages/mark-read/", {
+    method: "POST",
+    body: { message_ids: messageIds },
   });
   return result?.Result || result;
 }
