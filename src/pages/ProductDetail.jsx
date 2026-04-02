@@ -122,7 +122,6 @@ export default function ProductDetail() {
 
       const defaultMessage = "Is this item still available?";
       const threadResponse = await createThreadAndSendMessage(
-        access,
         ownerId,
         defaultMessage,
         product?.id

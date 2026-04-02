@@ -13,7 +13,7 @@ export async function getMessages(threadId, page = null) {
   return result?.Result || { results: [], count: 0 };
 }
 
-export async function createThreadAndSendMessage(token, recipientId, message, productId = null) {
+export async function createThreadAndSendMessage(recipientId, message, productId = null) {
   const result = await apiClient("/api/communications/threads/", {
     method: "POST",
     body: {
@@ -34,6 +34,27 @@ export async function sendMessage(threadId, message) {
     },
   });
   return result?.Result || result;
+}
+
+export async function createOffer(threadId, amount) {
+  const result = await apiClient("/api/communications/offers/", {
+    method: "POST",
+    body: { thread_id: threadId, amount },
+  });
+  return result?.Result || result;
+}
+
+export async function respondToOffer(offerId, status) {
+  const result = await apiClient(`/api/communications/offers/${offerId}/`, {
+    method: "PATCH",
+    body: { status },
+  });
+  return result?.Result || result;
+}
+
+export async function getOfferHistory(threadId) {
+  const result = await apiClient(`/api/communications/offers/?thread_id=${threadId}`);
+  return result?.Result || [];
 }
 
 export async function markMessagesRead(messageIds) {
