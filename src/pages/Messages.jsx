@@ -4,12 +4,53 @@ import {
   getThreads, getMessages, markMessagesRead,
   createOffer, respondToOffer, getOfferHistory,
 } from "../api/communications";
+import reviewAPI from "../api/review";
 import AuthContext from "../auth/AuthProvider";
 import ReportModal from "../components/ReportModal";
+import ReviewModal from "../components/ReviewModal";
 import Toast from "../components/Toast";
 import paymentAPI from "../api/payment";
 import productAPI from "../api/product";
 import { getErrorMessage } from "../utils/errorHandler";
+
+function firstDefined(...values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return null;
+}
+
+function normalizeThread(thread, currentUserId) {
+  const selfId = firstDefined(thread?.self_id, thread?.self?.id, currentUserId, thread?.user1_id, thread?.user1?.id);
+
+  let participantId = firstDefined(
+    thread?.participant_id,
+    thread?.participant?.id,
+    thread?.user2_id,
+    thread?.user2?.id,
+    thread?.other_user_id,
+    thread?.receiver_id,
+    thread?.recipient_id
+  );
+
+  if (!participantId && thread?.user1_id && thread?.user2_id && selfId) {
+    participantId = String(thread.user1_id) === String(selfId) ? thread.user2_id : thread.user1_id;
+  }
+
+  return {
+    ...thread,
+    self_id: selfId,
+    participant_id: participantId,
+    participant_name: firstDefined(thread?.participant_name, thread?.participant?.full_name, thread?.user2_name, thread?.other_user_name),
+    participant_email: firstDefined(thread?.participant_email, thread?.participant?.email, thread?.user2_email, thread?.other_user_email),
+    participant_profile_picture: firstDefined(
+      thread?.participant_profile_picture,
+      thread?.participant?.profile_picture,
+      thread?.user2_profile_picture,
+      thread?.other_user_profile_picture
+    ),
+  };
+}
 
 function timeShort(ts) {
   try {
@@ -58,6 +99,11 @@ export default function Messages() {
   const [offerHistory,        setOfferHistory]        = useState([]);
   const [offerHistoryLoading, setOfferHistoryLoading] = useState(false);
 
+  const [reviewPermission,      setReviewPermission]      = useState(null);
+  const [reviewPermissionLoading,setReviewPermissionLoading]= useState(false);
+  const [showReviewModal,       setShowReviewModal]       = useState(false);
+  const [reviewRefreshKey,      setReviewRefreshKey]      = useState(0);
+
   const wsRef       = useRef(null);
   const listRef     = useRef(null);
   const textInputRef= useRef(null);
@@ -69,12 +115,15 @@ export default function Messages() {
       setThreadsLoading(true);
       try {
         const res = await getThreads();
+        const normalizedThreads = Array.isArray(res)
+          ? res.map((item) => normalizeThread(item, user?.id))
+          : [];
         if (mounted) {
-          setThreads(res);
+          setThreads(normalizedThreads);
           const threadIdFromState = location.state?.threadId;
-          if (threadIdFromState && res.length > 0) {
-            const found = res.find((t) => t.id === threadIdFromState);
-            if (found) selectThread(found, res);
+          if (threadIdFromState && normalizedThreads.length > 0) {
+            const found = normalizedThreads.find((t) => String(t.id) === String(threadIdFromState));
+            if (found) selectThread(found, normalizedThreads);
           }
         }
       } catch (e) { console.error(e); }
@@ -83,7 +132,7 @@ export default function Messages() {
     if (access) load();
     return () => (mounted = false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [access, location.state?.threadId]);
+  }, [access, location.state?.threadId, user?.id]);
 
   // ── Select a thread ──────────────────────────────────────────────────────
   function selectThread(thread, threadList) {
@@ -93,6 +142,7 @@ export default function Messages() {
     setOfferInputAmount("");
     setShowOfferHistory(false);
     setOfferHistory([]);
+    setReviewPermission(null);
     setThreads((prev) =>
       (threadList || prev).map((t) =>
         t.id === thread.id ? { ...t, unread_count: 0 } : t
@@ -207,7 +257,14 @@ export default function Messages() {
           );
 
           if (!isMine && data.id) markMessagesRead([data.id]).catch(console.error);
-          getThreads().then((res) => setThreads(res)).catch(console.error);
+          getThreads()
+            .then((res) => {
+              const normalizedThreads = Array.isArray(res)
+                ? res.map((item) => normalizeThread(item, user?.id))
+                : [];
+              setThreads(normalizedThreads);
+            })
+            .catch(console.error);
         } catch (err) { console.error("WebSocket parse error:", err); }
       };
     } catch (err) { console.error("WebSocket creation error:", err); }
@@ -316,6 +373,74 @@ export default function Messages() {
       setOfferHistory(res);
     } catch (e) { console.error(e); }
     finally { setOfferHistoryLoading(false); }
+  }
+
+  useEffect(() => {
+    const participantId = selectedThread?.participant_id;
+    const selfId = selectedThread?.self_id || user?.id;
+
+    if (!participantId || !access) {
+      setReviewPermissionLoading(false);
+      setReviewPermission(null);
+      return;
+    }
+
+    if (String(participantId) === String(selfId)) {
+      setReviewPermissionLoading(false);
+      setReviewPermission({
+        can_review: false,
+        already_reviewed: false,
+        existing_review_id: null,
+      });
+      return;
+    }
+
+    let mounted = true;
+    setReviewPermissionLoading(true);
+
+    reviewAPI
+      .canReviewUser(participantId)
+      .then((response) => {
+        if (!mounted) return;
+        setReviewPermission({
+          can_review: !!response?.can_review,
+          already_reviewed: !!response?.already_reviewed,
+          existing_review_id: response?.existing_review_id || null,
+        });
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setReviewPermission({
+          can_review: false,
+          already_reviewed: false,
+          existing_review_id: null,
+        });
+      })
+      .finally(() => {
+        if (mounted) setReviewPermissionLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedThread?.participant_id, selectedThread?.self_id, access, reviewRefreshKey, user?.id]);
+
+  function handleOpenReviewModal() {
+    if (!selectedThread?.participant_id) {
+      setToast({ type: "error", message: "Could not identify this user for review.", key: Date.now() });
+      return;
+    }
+    if (!reviewPermission?.can_review) return;
+    setShowReviewModal(true);
+  }
+
+  function handleReviewSubmitted(_review, mode) {
+    setToast({
+      type: "success",
+      message: mode === "edit" ? "Review updated successfully." : "Review submitted successfully.",
+      key: Date.now(),
+    });
+    setReviewRefreshKey((value) => value + 1);
   }
 
   // ── Derive offer UI state ────────────────────────────────────────────────
@@ -686,6 +811,22 @@ export default function Messages() {
                   {selectedThread.participant_name || selectedThread.participant_email}
                 </div>
               </div>
+
+              <button
+                onClick={handleOpenReviewModal}
+                disabled={reviewPermissionLoading || !reviewPermission?.can_review}
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border transition disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ borderColor: "#FCD34D", color: "#B45309", backgroundColor: "#FFFBEB" }}
+                title="Rate this user"
+              >
+                <span className="text-base leading-none">★</span>
+                {reviewPermissionLoading
+                  ? "Checking..."
+                  : reviewPermission?.already_reviewed
+                  ? "Edit Review"
+                  : "Rate User"}
+              </button>
+
               <button
                 onClick={() => setShowReportModal(true)}
                 className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border transition hover:bg-red-50 hover:border-red-300"
@@ -786,6 +927,16 @@ export default function Messages() {
           onClose={() => setShowReportModal(false)}
           conversationId={selectedThread.id}
           category="message"
+        />
+      )}
+
+      {selectedThread && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          revieweeId={selectedThread.participant_id}
+          existingReviewId={reviewPermission?.already_reviewed ? reviewPermission?.existing_review_id : null}
+          onSubmitted={handleReviewSubmitted}
         />
       )}
 

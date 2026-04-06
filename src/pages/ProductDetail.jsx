@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import productAPI from "../api/product";
+import reviewAPI from "../api/review";
 import { createThreadAndSendMessage } from "../api/communications";
 import AuthContext from "../auth/AuthProvider";
 import Toast from "../components/Toast";
@@ -31,10 +32,21 @@ function listingBadge(productType) {
   return { label: "Listing", cls: "bg-blue-600 text-white" };
 }
 
+function renderStars(value) {
+  const rounded = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
+  return (
+    <span className="text-yellow-400">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span key={star}>{star <= rounded ? "★" : "☆"}</span>
+      ))}
+    </span>
+  );
+}
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, access } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +55,8 @@ export default function ProductDetail() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [messagingLoading, setMessagingLoading] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [reviewSummary, setReviewSummary] = useState({ average_rating: 0, total_count: 0 });
+  const [reviewSummaryLoading, setReviewSummaryLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Scroll to top when product ID changes
@@ -97,6 +111,34 @@ export default function ProductDetail() {
     if (!user || !normalized) return false;
     return !!normalized.is_owner || user.id === normalized.owner_id;
   }, [user, normalized]);
+
+  useEffect(() => {
+    if (!normalized?.owner_id) return;
+
+    let mounted = true;
+    setReviewSummaryLoading(true);
+
+    reviewAPI
+      .getReviewSummary(normalized.owner_id)
+      .then((response) => {
+        if (!mounted) return;
+        setReviewSummary({
+          average_rating: Number(response?.average_rating || 0),
+          total_count: Number(response?.total_count || 0),
+        });
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setReviewSummary({ average_rating: 0, total_count: 0 });
+      })
+      .finally(() => {
+        if (mounted) setReviewSummaryLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [normalized?.owner_id]);
 
   const toggleFavorite = () => {
     setIsFavorite((p) => !p);
@@ -318,13 +360,30 @@ export default function ProductDetail() {
             className="bg-white rounded-xl border border-gray-200 p-6 cursor-pointer hover:shadow-lg hover:border-green-300 transition-all"
           >
             <h2 className="text-base font-semibold text-gray-900">Seller Information</h2>
-            <div className="mt-3 flex items-center gap-3 group">
+            <div className="mt-3 flex items-center justify-between gap-3 group">
+              <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold group-hover:bg-green-200 transition-colors">
                 {normalized.owner_name?.[0]?.toUpperCase() || "U"}
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900 group-hover:text-green-600 transition-colors">{normalized.owner_name}</p>
                 <p className="text-xs text-gray-500">Verified Seller</p>
+              </div>
+              </div>
+
+              <div className="text-right">
+                {reviewSummaryLoading ? (
+                  <p className="text-xs text-gray-400">Loading rating...</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {Number(reviewSummary.average_rating || 0).toFixed(1)} / 5
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {renderStars(reviewSummary.average_rating)} ({reviewSummary.total_count})
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>
