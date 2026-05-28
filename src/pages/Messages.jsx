@@ -103,6 +103,7 @@ export default function Messages() {
   const [reviewPermissionLoading,setReviewPermissionLoading]= useState(false);
   const [showReviewModal,       setShowReviewModal]       = useState(false);
   const [reviewRefreshKey,      setReviewRefreshKey]      = useState(0);
+  const [wsReady,               setWsReady]               = useState(false);
 
   const wsRef       = useRef(null);
   const listRef     = useRef(null);
@@ -196,11 +197,18 @@ export default function Messages() {
     const wsUrl = import.meta.env.VITE_WS_BASE_URL;
     const url   = `${wsUrl}/ws/chat/${selectedThread.id}/?token=${access}`;
     try {
+      setWsReady(false);
       const ws = new WebSocket(url);
       wsRef.current = ws;
-      ws.onopen  = () => console.log("WebSocket connected");
+      ws.onopen  = () => {
+        console.log("WebSocket connected");
+        setWsReady(true);
+      };
       ws.onerror = (err) => console.error("WebSocket error:", err);
-      ws.onclose = () => console.log("WebSocket disconnected");
+      ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        setWsReady(false);
+      };
 
       ws.onmessage = (e) => {
         try {
@@ -293,7 +301,11 @@ export default function Messages() {
   // ── Send message via WS ──────────────────────────────────────────────────
   function send() {
     if (!text.trim()) return;
-    wsRef.current?.send(JSON.stringify({ type: "message", body: text }));
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      setToast({ type: "error", message: "Connection not ready. Please wait...", key: Date.now() });
+      return;
+    }
+    wsRef.current.send(JSON.stringify({ type: "message", body: text }));
     setText("");
   }
 
@@ -899,9 +911,10 @@ export default function Messages() {
               />
               <button
                 onClick={send}
-                className="text-white px-4 py-2 rounded-lg transition whitespace-nowrap"
+                disabled={!wsReady || !text.trim()}
+                className="text-white px-4 py-2 rounded-lg transition whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "var(--eco-primary)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(0.9)")}
+                onMouseEnter={(e) => !wsReady || !text.trim() ? null : (e.currentTarget.style.filter = "brightness(0.9)")}
                 onMouseLeave={(e) => (e.currentTarget.style.filter = "brightness(1)")}
               >
                 Send
@@ -926,6 +939,7 @@ export default function Messages() {
           isOpen={showReportModal}
           onClose={() => setShowReportModal(false)}
           conversationId={selectedThread.id}
+          targetUserId={selectedThread.participant_id}
           category="message"
         />
       )}

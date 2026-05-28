@@ -114,6 +114,49 @@ const recycleAPI = {
     }
   },
 
+  // Recycler: Get saved scrap requests
+  getRecyclerSavedRequests: async () => {
+    try {
+      const response = await apiClient('/api/recycle/recycler/saved-requests/');
+      const data = response?.Result || response;
+      const items = Array.isArray(data) ? data : data?.results || [];
+      return items.map((item) => (
+        item?.scrap_request
+          ? { ...item.scrap_request, saved_id: item.id }
+          : item
+      ));
+    } catch (error) {
+      console.error('Error fetching recycler saved requests:', error);
+      throw error;
+    }
+  },
+
+  // Recycler: Save a pending scrap request
+  saveRecyclerPendingRequest: async (id) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/pending-requests/${id}/save/`, {
+        method: 'POST'
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error saving recycler pending request:', error);
+      throw error;
+    }
+  },
+
+  // Recycler: Unsave a pending scrap request
+  unsaveRecyclerPendingRequest: async (id) => {
+    try {
+      const response = await apiClient(`/api/recycle/recycler/pending-requests/${id}/save/`, {
+        method: 'DELETE'
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error unsaving recycler pending request:', error);
+      throw error;
+    }
+  },
+
   // Get single scrap request detail by ID
   getScrapRequestDetail: async (id) => {
     try {

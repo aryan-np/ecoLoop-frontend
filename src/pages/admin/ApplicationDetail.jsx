@@ -10,7 +10,7 @@ const ApplicationDetail = () => {
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adminNotes, setAdminNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState(null); // 'approve', 'reject', or null
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   useEffect(() => {
@@ -21,9 +21,10 @@ const ApplicationDetail = () => {
     try {
       setLoading(true);
       const response = await adminAPI.getRoleApplication(id);
-      
-      if (response.IsSuccess) {
-        const appData = response.Result;
+
+      const appData = response?.Result || response?.result || response;
+
+      if (response?.IsSuccess || appData?.id) {
         setApplication(appData);
         setAdminNotes(appData.admin_notes || '');
       } else {
@@ -47,47 +48,48 @@ const ApplicationDetail = () => {
 
   const handleReview = async (action) => {
     if (!adminNotes.trim()) {
-      setToast({ 
-        show: true, 
-        message: 'Admin notes are required', 
-        type: 'error' 
+      setToast({
+        show: true,
+        message: 'Admin notes are required',
+        type: 'error'
       });
       return;
     }
 
     try {
-      setSubmitting(true);
+      setSubmittingAction(action);
       const response = await adminAPI.reviewRoleApplication(id, {
         action,
+        status: action === 'approve' ? 'approved' : 'rejected',
         admin_notes: adminNotes
       });
 
-      if (response.IsSuccess) {
-        setToast({ 
-          show: true, 
-          message: `Application ${action}d successfully`, 
-          type: 'success' 
+      if (response?.IsSuccess || response?.Result || response?.result || response?.id) {
+        setToast({
+          show: true,
+          message: `Application ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+          type: 'success'
         });
-        
+
         setTimeout(() => {
           navigate('/admin/verifications');
         }, 1500);
       } else {
-        setToast({ 
-          show: true, 
-          message: getErrorMessage(response, `Failed to ${action} application`), 
-          type: 'error' 
+        setToast({
+          show: true,
+          message: getErrorMessage(response, `Failed to ${action} application`),
+          type: 'error'
         });
       }
     } catch (error) {
       console.error(`Error ${action} application:`, error);
-      setToast({ 
-        show: true, 
-        message: getErrorMessage(error, `Failed to ${action} application`), 
-        type: 'error' 
+      setToast({
+        show: true,
+        message: getErrorMessage(error, `Failed to ${action} application`),
+        type: 'error'
       });
     } finally {
-      setSubmitting(false);
+      setSubmittingAction(null);
     }
   };
 
@@ -260,7 +262,7 @@ const ApplicationDetail = () => {
             rows={4}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
             placeholder="Enter notes about this application review..."
-            disabled={submitting}
+            disabled={submittingAction !== null}
           />
           <p className="text-sm text-gray-500 mt-1">
             Please provide detailed notes about your decision. This will be shared with the applicant.
@@ -271,17 +273,17 @@ const ApplicationDetail = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => handleReview('approve')}
-              disabled={submitting || !adminNotes.trim()}
+              disabled={submittingAction !== null || !adminNotes.trim()}
               className="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Processing...' : 'Approve Application'}
+              {submittingAction === 'approve' ? 'Processing...' : 'Approve Application'}
             </button>
             <button
               onClick={() => handleReview('reject')}
-              disabled={submitting || !adminNotes.trim()}
+              disabled={submittingAction !== null || !adminNotes.trim()}
               className="px-6 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Processing...' : 'Reject Application'}
+              {submittingAction === 'reject' ? 'Processing...' : 'Reject Application'}
             </button>
           </div>
         )}

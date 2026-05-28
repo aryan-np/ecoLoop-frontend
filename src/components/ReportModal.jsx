@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import reportAPI from "../api/report";
 import Toast from "./Toast";
 import { getErrorMessage } from "../utils/errorHandler";
 
-export default function ReportModal({ isOpen, onClose, listingId, conversationId, category = "product" }) {
+export default function ReportModal({ isOpen, onClose, listingId, conversationId, targetUserId, category = "product" }) {
   const [formData, setFormData] = useState({
     subject: "",
     description: "",
@@ -12,6 +12,14 @@ export default function ReportModal({ isOpen, onClose, listingId, conversationId
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [fileName, setFileName] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ subject: "", description: "", attachment: null });
+      setFileName("");
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,16 +50,19 @@ export default function ReportModal({ isOpen, onClose, listingId, conversationId
     setLoading(true);
     try {
       const reportData = {
-        category: category,
+        category: String(category || "product").toLowerCase(),
         subject: formData.subject,
         description: formData.description,
       };
 
-      // Add the appropriate ID based on category
-      if (category === "product" && listingId) {
-        reportData.listing_id = listingId;
-      } else if (category === "message" && conversationId) {
-        reportData.conversation_id = conversationId;
+      if (targetUserId) {
+        reportData.target_user_id = targetUserId;
+      }
+
+      if (reportData.category === "product" && listingId) {
+        reportData.listing_id = Number(listingId);
+      } else if (reportData.category === "message" && conversationId) {
+        reportData.conversation_id = Number(conversationId);
       }
 
       if (formData.attachment) {

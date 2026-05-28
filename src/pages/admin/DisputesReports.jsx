@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import reportAPI from '../../api/report';
+import productAPI from '../../api/product';
+import { adminClearThreadMessages, adminRestoreThreadMessages } from '../../api/communications';
 import Toast from '../../components/Toast';
 import { getErrorMessage } from '../../utils/errorHandler';
 
@@ -45,10 +47,18 @@ const DisputesReports = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [toast, setToast] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
     loadReports();
   }, []);
+
+  useEffect(() => {
+    if (showDetailModal) {
+      setNotifyUsers(false);
+    }
+  }, [showDetailModal]);
 
   const loadReports = async () => {
     setLoading(true);
@@ -106,20 +116,79 @@ const DisputesReports = () => {
     loadReportDetail(report.id);
   };
 
+  const handleAdminAction = async (mode) => {
+    if (!selectedReport) return;
+
+    const isProduct = selectedReport.category === 'product';
+    const isMessage = selectedReport.category === 'message';
+    const isPending = selectedReport.status === 'pending' || selectedReport.status === 'reopened';
+    const isResolved = selectedReport.status === 'resolved';
+    const targetId = isProduct ? selectedReport.listing_id : selectedReport.conversation_id;
+    const actionPayload = { report_id: selectedReport.id, notify_user: notifyUsers };
+
+    if (mode === 'undo' && !isResolved) {
+      setToast({ type: "error", message: "Only resolved reports can be undone." });
+      return;
+    }
+
+    if (mode !== 'undo' && !isPending) {
+      setToast({ type: "error", message: "Only pending or reopened reports can be actioned." });
+      return;
+    }
+
+    if (!targetId) {
+      setToast({ type: "error", message: "Missing target ID for this report." });
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (isProduct) {
+        if (mode === 'undo') {
+          await productAPI.adminRestoreProduct(targetId, actionPayload);
+          setToast({ type: "success", message: "Product restored successfully." });
+        } else {
+          await productAPI.adminDeleteProduct(targetId, actionPayload);
+          setToast({ type: "success", message: "Product deleted successfully." });
+        }
+      } else if (isMessage) {
+        if (mode === 'undo') {
+          await adminRestoreThreadMessages(targetId, actionPayload);
+          setToast({ type: "success", message: "Chat messages restored successfully." });
+        } else {
+          await adminClearThreadMessages(targetId, actionPayload);
+          setToast({ type: "success", message: "Chat messages cleared successfully." });
+        }
+      } else {
+        setToast({ type: "error", message: "No admin action configured for this report type." });
+        return;
+      }
+
+      await loadReports();
+      setShowDetailModal(false);
+      setSelectedReport(null);
+    } catch (error) {
+      console.error("Admin action failed:", error);
+      setToast({ type: "error", message: getErrorMessage(error, "Admin action failed") });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const filteredReports = reports.filter(report => {
     const matchesTab = activeTab === 'all' || report.status === activeTab;
     const matchesSearch = searchQuery === '' ||
-      report.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.description.toLowerCase().includes(searchQuery.toLowerCase());
+      report.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.description?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
   const tabCounts = {
     all: reports.length,
     pending: reports.filter(r => r.status === 'pending').length,
-    under_review: reports.filter(r => r.status === 'under_review').length,
-    resolved: reports.filter(r => r.status === 'resolved').length,
+    reopened: reports.filter(r => r.status === 'reopened').length,
+    reviewed: reports.filter(r => r.status === 'resolved').length,
   };
 
   return (
@@ -155,24 +224,24 @@ const DisputesReports = () => {
               Pending ({tabCounts.pending})
             </button>
             <button
-              onClick={() => setActiveTab('under_review')}
+              onClick={() => setActiveTab('reopened')}
               className={`py-4 font-medium border-b-2 transition-colors ${
-                activeTab === 'under_review'
+                activeTab === 'reopened'
                   ? 'border-teal-600 text-teal-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              In Review ({tabCounts.under_review})
+              Reopened ({tabCounts.reopened})
             </button>
             <button
-              onClick={() => setActiveTab('resolved')}
+              onClick={() => setActiveTab('reviewed')}
               className={`py-4 font-medium border-b-2 transition-colors ${
-                activeTab === 'resolved'
+                activeTab === 'reviewed'
                   ? 'border-teal-600 text-teal-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              Resolved ({tabCounts.resolved})
+              Reviewed ({tabCounts.reviewed})
             </button>
           </div>
         </div>
@@ -444,12 +513,53 @@ const DisputesReports = () => {
                   >
                     Close
                   </button>
-                  {selectedReport.status !== 'resolved' && (
-                    <button className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg font-semibold hover:bg-teal-700 transition">
-                      Take Action
-                    </button>
+                  {(selectedReport.category === 'product' || selectedReport.category === 'message') && (
+                    <>
+                      {(selectedReport.status === 'pending' || selectedReport.status === 'reopened') && (
+                        <button
+                          onClick={() => handleAdminAction('action')}
+                          disabled={actionLoading}
+                          className={`flex-1 py-2.5 rounded-lg font-semibold transition ${
+                            selectedReport.category === 'product'
+                              ? 'bg-red-600 text-white hover:bg-red-700'
+                              : 'bg-teal-600 text-white hover:bg-teal-700'
+                          } ${actionLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {actionLoading
+                            ? 'Processing...'
+                            : selectedReport.category === 'product'
+                              ? 'Delete Product'
+                              : 'Clear Chat'}
+                        </button>
+                      )}
+                      {selectedReport.status === 'resolved' && (
+                        <button
+                          onClick={() => handleAdminAction('undo')}
+                          disabled={actionLoading}
+                          className={`flex-1 py-2.5 rounded-lg font-semibold transition bg-amber-500 text-white hover:bg-amber-600 ${
+                            actionLoading ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          {actionLoading
+                            ? 'Processing...'
+                            : selectedReport.category === 'product'
+                              ? 'Restore Product'
+                              : 'Restore Chat'}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
+                <label className="flex items-center gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={notifyUsers}
+                    onChange={(event) => setNotifyUsers(event.target.checked)}
+                    disabled={actionLoading}
+                    className="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  />
+                  Notify users about this action
+                </label>
               </div>
             )}
           </div>

@@ -65,3 +65,19 @@ export async function markMessagesRead(messageIds) {
   });
   return result?.Result || result;
 }
+
+export async function adminClearThreadMessages(threadId, body = undefined) {
+  const result = await apiClient(`/api/communications/threads/${threadId}/admin-clear-messages/`, {
+    method: "POST",
+    body,
+  });
+  return result?.Result || result;
+}
+
+export async function adminRestoreThreadMessages(threadId, body = undefined) {
+  const result = await apiClient(`/api/communications/threads/${threadId}/admin-restore-messages/`, {
+    method: "POST",
+    body,
+  });
+  return result?.Result || result;
+}

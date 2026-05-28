@@ -9,13 +9,19 @@ import { getErrorMessage } from "../utils/errorHandler";
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [toast, setToast] = useState(null);
   const [formData, setFormData] = useState({});
+  const [passwordForm, setPasswordForm] = useState({
+    old_password: "",
+    new_password: "",
+    confirm_new_password: "",
+  });
 
   useEffect(() => {
     loadProfile();
@@ -197,6 +203,57 @@ export default function Profile() {
   const handleDiscard = () => {
     setFormData(profile);
     setIsEditing(false);
+  };
+
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (!passwordForm.old_password || !passwordForm.new_password || !passwordForm.confirm_new_password) {
+      setToast({ message: "All password fields are required", type: "error", key: Date.now() });
+      return;
+    }
+
+    if (passwordForm.new_password !== passwordForm.confirm_new_password) {
+      setToast({ message: "New passwords do not match", type: "error", key: Date.now() });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const resp = await authAPI.changePassword(
+        passwordForm.old_password,
+        passwordForm.new_password,
+        passwordForm.confirm_new_password
+      );
+
+      if (resp?.IsSuccess || resp?.message || resp?.Result) {
+        setToast({ message: "Password changed successfully!", type: "success", key: Date.now() });
+        setPasswordForm({
+          old_password: "",
+          new_password: "",
+          confirm_new_password: "",
+        });
+      } else {
+        setToast({
+          message: getErrorMessage(resp, "Failed to change password"),
+          type: "error",
+          key: Date.now(),
+        });
+      }
+    } catch (err) {
+      setToast({
+        message: getErrorMessage(err, "Failed to change password"),
+        type: "error",
+        key: Date.now(),
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   if (loading) {
@@ -406,7 +463,7 @@ export default function Profile() {
           </div>
 
           {/* Apply for Verified Role or Access Panels */}
-          {showApplicationSection && (
+          {!isInAdminPanel && showApplicationSection && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Apply for Verified Role</h2>
               <p className="text-gray-600 text-sm mb-6">Upgrade your account to become a verified Recycler or NGO</p>
@@ -476,6 +533,59 @@ export default function Profile() {
               </div>
             </div>
           )}
+
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
+              <p className="text-gray-600 text-sm mt-1">Update your account password securely.</p>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <input
+                  type="password"
+                  name="old_password"
+                  value={passwordForm.old_password}
+                  onChange={handlePasswordInputChange}
+                  placeholder="Enter current password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input
+                  type="password"
+                  name="new_password"
+                  value={passwordForm.new_password}
+                  onChange={handlePasswordInputChange}
+                  placeholder="Enter new password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  name="confirm_new_password"
+                  value={passwordForm.confirm_new_password}
+                  onChange={handlePasswordInputChange}
+                  placeholder="Re-enter new password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+              >
+                {isChangingPassword ? "Updating Password..." : "Change Password"}
+              </button>
+            </form>
+          </div>
 
           {/* Access Verified Panels / Open Platform */}
           {(hasRecyclerRole || hasNGORole || hasAdminRole) && (
@@ -585,6 +695,7 @@ export default function Profile() {
           )}
 
           {/* Quick Links */}
+          {!isInAdminPanel && (
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
             <div className="space-y-2">
@@ -599,6 +710,7 @@ export default function Profile() {
               </button>
             </div>
           </div>
+          )}
         </div>
       ) : (
         // Edit Mode

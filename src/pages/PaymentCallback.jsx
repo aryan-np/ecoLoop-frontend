@@ -29,8 +29,8 @@ export default function PaymentCallback() {
         if (isSuccess && paymentStatus === "Completed") {
           localStorage.removeItem("khalti_pidx");
           setStatus("success");
-          setMessage("Your payment was successful! Redirecting to your listings...");
-          scheduleRedirect("/my-listings");
+          setMessage("Your payment was successful! Redirecting to browse items...");
+          scheduleRedirect("/products");
         } else {
           setStatus("failed");
           setMessage(

@@ -120,6 +120,49 @@ const donationAPI = {
     }
   },
 
+  // NGO: Get saved donation requests
+  getNGOSavedRequests: async () => {
+    try {
+      const response = await apiClient('/api/donations/ngo/saved-requests/');
+      const data = response?.Result || response;
+      const items = Array.isArray(data) ? data : data?.results || [];
+      return items.map((item) => (
+        item?.donation_request
+          ? { ...item.donation_request, saved_id: item.id }
+          : item
+      ));
+    } catch (error) {
+      console.error('Error fetching NGO saved requests:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Save a pending donation request
+  saveNGOPendingRequest: async (id) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/pending-requests/${id}/save/`, {
+        method: 'POST'
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error saving NGO pending request:', error);
+      throw error;
+    }
+  },
+
+  // NGO: Unsave a pending donation request
+  unsaveNGOPendingRequest: async (id) => {
+    try {
+      const response = await apiClient(`/api/donations/ngo/pending-requests/${id}/save/`, {
+        method: 'DELETE'
+      });
+      return response?.Result || response;
+    } catch (error) {
+      console.error('Error unsaving NGO pending request:', error);
+      throw error;
+    }
+  },
+
   // NGO: Get single donation request detail by ID
   getNGORequestDetail: async (id) => {
     try {

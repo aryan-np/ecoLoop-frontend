@@ -29,9 +29,11 @@ const Applications = () => {
       }
 
       const response = await adminAPI.getRoleApplications(filters);
-      
-      if (response.IsSuccess) {
-        setApplications(response.Result?.results || []);
+
+      const data = response?.Result || response?.result || response;
+
+      if (response?.IsSuccess || data?.results || Array.isArray(data)) {
+        setApplications(Array.isArray(data?.results) ? data.results : Array.isArray(data) ? data : []);
       } else {
         setToast({ 
           show: true, 

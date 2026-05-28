@@ -213,23 +213,12 @@ async function fetchOSRMRoute(from, to) {
 }
 
 async function completeNGOWithProofFallback(requestId, file, notes) {
-  const attempts = ['proof_image', 'uploaded_images', 'photo_proof'];
-  let lastError = null;
-
-  for (const fieldName of attempts) {
-    try {
-      const formData = new FormData();
-      formData.append(fieldName, file);
-      if (notes) {
-        formData.append('notes', notes);
-      }
-      return await donationAPI.completeNGOAcceptedRequest(requestId, formData);
-    } catch (error) {
-      lastError = error;
-    }
+  const formData = new FormData();
+  formData.append('photo_proof', file);
+  if (notes) {
+    formData.append('notes', notes);
   }
-
-  throw lastError || new Error('Failed to upload photo proof');
+  return donationAPI.completeNGOAcceptedRequest(requestId, formData);
 }
 
 export default function NavigatePickup() {

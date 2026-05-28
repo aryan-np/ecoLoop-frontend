@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import logo from "../../logo.png";
 
 export default function Footer() {
@@ -24,21 +25,21 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="/" className="hover:text-green-400 transition">Home</a></li>
-              <li><a href="/products" className="hover:text-green-400 transition">Browse Products</a></li>
-              <li><a href="/products/new" className="hover:text-green-400 transition">Sell Item</a></li>
-              <li><a href="/impact" className="hover:text-green-400 transition">Impact</a></li>
+              <li><Link to="/" className="hover:text-green-400 transition">Home</Link></li>
+              <li><Link to="/products" className="hover:text-green-400 transition">Browse Products</Link></li>
+              <li><Link to="/products/new" className="hover:text-green-400 transition">Sell Item</Link></li>
+              <li><Link to="/favorites" className="hover:text-green-400 transition">Favorites</Link></li>
             </ul>
           </div>
 
-          {/* About section */}
+          {/* Community section */}
           <div>
-            <h3 className="text-white font-semibold mb-4">About</h3>
+            <h3 className="text-white font-semibold mb-4">Community</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-green-400 transition">About Us</a></li>
-              <li><a href="#" className="hover:text-green-400 transition">Contact Us</a></li>
-              <li><a href="#" className="hover:text-green-400 transition">Blog</a></li>
-              <li><a href="#" className="hover:text-green-400 transition">FAQs</a></li>
+              <li><Link to="/impact" className="hover:text-green-400 transition">Impact</Link></li>
+              <li><Link to="/donate" className="hover:text-green-400 transition">Donate</Link></li>
+              <li><Link to="/recycle" className="hover:text-green-400 transition">Recycle</Link></li>
+              <li><Link to="/messages" className="hover:text-green-400 transition">Messages</Link></li>
             </ul>
           </div>
 
@@ -46,8 +47,8 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-sm">
+              <li><Link to="/terms" className="hover:text-green-400 transition">Terms & Conditions</Link></li>
               <li><a href="#" className="hover:text-green-400 transition">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-green-400 transition">Terms of Service</a></li>
               <li><a href="#" className="hover:text-green-400 transition">Cookie Policy</a></li>
               <li><a href="#" className="hover:text-green-400 transition">Disclaimer</a></li>
             </ul>
@@ -56,24 +57,8 @@ export default function Footer() {
 
         {/* Divider */}
         <div className="border-t border-gray-800 pt-8">
-          {/* Social Links */}
-          <div className="flex justify-center gap-6 mb-6">
-            <a href="#" className="text-gray-400 hover:text-green-400 transition">
-              <span className="text-sm">Facebook</span>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-green-400 transition">
-              <span className="text-sm">Twitter</span>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-green-400 transition">
-              <span className="text-sm">Instagram</span>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-green-400 transition">
-              <span className="text-sm">LinkedIn</span>
-            </a>
-          </div>
-
           {/* Copyright */}
-          <div className="text-center text-sm text-gray-500 border-t border-gray-800 pt-6">
+          <div className="text-center text-sm text-gray-500">
             <p>&copy; {currentYear} ecoLoop. All rights reserved.</p>
             <p className="mt-2">Making sustainability circular, one item at a time.</p>
           </div>

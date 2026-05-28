@@ -33,6 +33,12 @@ export default function NavBar() {
                 </svg>
                 <span className="hidden lg:inline">Browse</span>
               </NavLink>
+              <NavLink to="/favorites" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span className="hidden lg:inline">Favorites</span>
+              </NavLink>
               <NavLink to="/my-listings" className={({isActive}) => `flex items-center gap-2 transition ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -126,6 +132,12 @@ export default function NavBar() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                   <span>Browse</span>
+                </NavLink>
+                <NavLink to="/favorites" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span>Favorites</span>
                 </NavLink>
                 <NavLink to="/my-listings" onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 py-2 px-3 rounded-lg transition ${isActive ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

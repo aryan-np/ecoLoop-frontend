@@ -13,6 +13,7 @@ export default function ScrapRequests() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [conditionFilter, setConditionFilter] = useState('all');
   const [weightFilter, setWeightFilter] = useState('all');
+  const [savingMap, setSavingMap] = useState({});
 
   useEffect(() => {
     loadCategories();
@@ -49,6 +50,34 @@ export default function ScrapRequests() {
       setRequests([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const setSaving = (requestId, isSaving) => {
+    setSavingMap((prev) => ({
+      ...prev,
+      [requestId]: isSaving
+    }));
+  };
+
+  const handleToggleSave = async (requestId, isSaved) => {
+    try {
+      setSaving(requestId, true);
+      if (isSaved) {
+        await recycleAPI.unsaveRecyclerPendingRequest(requestId);
+      } else {
+        await recycleAPI.saveRecyclerPendingRequest(requestId);
+      }
+
+      setRequests((prev) => prev.map((request) => (
+        request.id === requestId
+          ? { ...request, is_saved: !isSaved }
+          : request
+      )));
+    } catch (error) {
+      console.error('Error toggling saved request:', error);
+    } finally {
+      setSaving(requestId, false);
     }
   };
 
@@ -294,12 +323,26 @@ export default function ScrapRequests() {
                     <span className="text-xs text-gray-500">
                       Posted on {formatDate(request.request_date)}
                     </span>
-                    <button 
-                      onClick={() => navigate(`/recycler/scrap-requests/${request.id}`)}
-                      className="px-4 py-2 text-sm font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition"
-                    >
-                      View Details →
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleSave(request.id, Boolean(request.is_saved))}
+                        disabled={savingMap[request.id]}
+                        className={`px-3 py-2 text-sm font-semibold rounded-lg transition border ${
+                          request.is_saved
+                            ? 'text-teal-700 bg-teal-100 border-teal-200 hover:bg-teal-200'
+                            : 'text-gray-600 border-gray-200 hover:bg-gray-50'
+                        } ${savingMap[request.id] ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        title={request.is_saved ? 'Unsave request' : 'Save request'}
+                      >
+                        {request.is_saved ? 'Saved' : 'Save'}
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/recycler/scrap-requests/${request.id}`)}
+                        className="px-4 py-2 text-sm font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition"
+                      >
+                        View Details →
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

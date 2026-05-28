@@ -9,7 +9,8 @@ import logo from "../../logo.png";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -22,20 +23,18 @@ export default function Login() {
     if (!form.email) return setToast({ type: "error", message: "Email is required", key: Date.now() });
     if (!form.password) return setToast({ type: "error", message: "Password is required", key: Date.now() });
 
-    setLoading(true);
+    setPasswordLoading(true);
     try {
       const resp = await authAPI.loginWithPassword(form.email, form.password);
       if (resp.IsSuccess) {
         if (resp.Result?.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });
-          
-          // Check user roles and redirect accordingly
+
           const userRoles = resp.Result.user?.roles || [];
           const isAdmin = userRoles.some(role => role.name === 'ADMIN');
           const isNGO = userRoles.some(role => role.name === 'NGO');
           const isRecycler = userRoles.some(role => role.name === 'RECYCLER');
-          
-          // Redirect based on role priority: Admin > NGO > Recycler > Regular User
+
           if (isAdmin) {
             navigate("/admin/dashboard", { state: { loginSuccess: true } });
           } else if (isNGO) {
@@ -52,7 +51,7 @@ export default function Login() {
     } catch (err) {
       setToast({ type: "error", message: getErrorMessage(err, "An error occurred during login"), key: Date.now() });
     } finally {
-      setLoading(false);
+      setPasswordLoading(false);
     }
   };
 
@@ -61,7 +60,7 @@ export default function Login() {
 
     if (!form.email) return setToast({ type: "error", message: "Email is required", key: Date.now() });
 
-    setLoading(true);
+    setOtpLoading(true);
     try {
       const resp = await authAPI.login(form.email, "OTP");
       if (resp.IsSuccess) {
@@ -73,7 +72,7 @@ export default function Login() {
     } catch (err) {
       setToast({ type: "error", message: getErrorMessage(err, "An error occurred"), key: Date.now() });
     } finally {
-      setLoading(false);
+      setOtpLoading(false);
     }
   };
 
@@ -113,10 +112,10 @@ export default function Login() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={passwordLoading}
             className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
           >
-            {loading ? "Logging in..." : "Log In"}
+            {passwordLoading ? "Logging in..." : "Log In"}
           </button>
         </form>
 
@@ -130,10 +129,10 @@ export default function Login() {
         {/* OTP Login Button */}
         <button
           onClick={submitOTP}
-          disabled={loading}
+          disabled={otpLoading}
           className="w-full py-3 border-2 border-blue-500 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 disabled:opacity-50 transition"
         >
-          {loading ? "Sending OTP..." : "Log in with OTP"}
+          {otpLoading ? "Sending OTP..." : "Log in with OTP"}
         </button>
 
         {/* Footer */}

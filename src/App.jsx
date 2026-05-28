@@ -18,6 +18,8 @@ import ProductForm from "./pages/ProductForm";
 import MyListings from "./pages/MyListings";
 import MyReports from "./pages/MyReports";
 import Messages from "./pages/Messages";
+import Favorites from "./pages/Favorites";
+import Terms from "./pages/Terms";
 import Impact from "./pages/Impact";
 import RecycleScrap from "./pages/RecycleScrap";
 import ScrapRequestForm from "./pages/ScrapRequestForm";
@@ -32,19 +34,20 @@ import Applications from "./pages/admin/Verifications";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import DisputesReports from "./pages/admin/DisputesReports";
 import SystemLogs from "./pages/admin/SystemLogs";
-import Settings from "./pages/admin/Settings";
 import NGOLayout from "./pages/ngo/NGOLayout";
 import NGODashboard from "./pages/ngo/NGODashboard";
 import DonationRequests from "./pages/ngo/DonationRequests";
 import DonationRequestDetail from "./pages/ngo/DonationRequestDetail";
 import AcceptedDonations from "./pages/ngo/AcceptedDonations";
 import ScheduledDonations from "./pages/ngo/ScheduledDonations";
+import SavedDonationRequests from "./pages/ngo/SavedDonationRequests";
 import RecyclerLayout from "./pages/recycler/RecyclerLayout";
 import RecyclerDashboard from "./pages/recycler/RecyclerDashboard";
 import ScrapRequests from "./pages/recycler/ScrapRequests";
 import ScrapRequestDetail from "./pages/recycler/ScrapRequestDetail";
 import PickupSchedule from "./pages/recycler/PickupSchedule";
 import CompletedPickups from "./pages/recycler/CompletedPickups";
+import SavedScrapRequests from "./pages/recycler/SavedScrapRequests";
 import NavigatePickup from "./pages/NavigatePickup";
 import PaymentCallback from "./pages/PaymentCallback";
 
@@ -85,11 +88,13 @@ function InnerApp() {
             <Route path="/login" element={<Login />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/verification-application/:type" element={<VerificationApplication />} />
             <Route path="/application-status" element={<ApplicationStatus />} />
             <Route path="/my-listings" element={<MyListings />} />
             <Route path="/my-reports" element={<MyReports />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/favorites" element={<Favorites />} />
             <Route path="/impact" element={<Impact />} />
             <Route path="/recycle" element={<RecycleScrap />} />
             <Route path="/recycle/submit" element={<ScrapRequestForm />} />
@@ -103,14 +108,20 @@ function InnerApp() {
             <Route path="/payment/callback" element={<PaymentCallback />} />
 
             {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route
+              path="/admin"
+              element={
+                <RequireAdmin>
+                  <AdminLayout />
+                </RequireAdmin>
+              }
+            >
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="verifications" element={<Applications />} />
               <Route path="applications/:id" element={<ApplicationDetail />} />
               <Route path="disputes" element={<DisputesReports />} />
               <Route path="logs" element={<SystemLogs />} />
-              <Route path="settings" element={<Settings />} />
               <Route path="profile" element={<Profile />} />
             </Route>
 
@@ -119,6 +130,7 @@ function InnerApp() {
               <Route path="dashboard" element={<NGODashboard />} />
               <Route path="donation-requests" element={<DonationRequests />} />
               <Route path="donation-requests/:id" element={<DonationRequestDetail />} />
+              <Route path="saved-requests" element={<SavedDonationRequests />} />
               <Route path="accepted-donations" element={<AcceptedDonations />} />
               <Route path="navigate-pickup/:id" element={<NavigatePickup />} />
               <Route path="completed-donations" element={<ScheduledDonations />} />
@@ -131,6 +143,7 @@ function InnerApp() {
               <Route path="dashboard" element={<RecyclerDashboard />} />
               <Route path="scrap-requests" element={<ScrapRequests />} />
               <Route path="scrap-requests/:id" element={<ScrapRequestDetail />} />
+              <Route path="saved-requests" element={<SavedScrapRequests />} />
               <Route path="pickup-schedule" element={<PickupSchedule />} />
               <Route path="navigate-pickup/:id" element={<NavigatePickup />} />
               <Route path="completed-pickups" element={<CompletedPickups />} />
@@ -151,6 +164,7 @@ function InnerApp() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/products/:id/edit" element={<ProductForm />} />
             <Route path="/seller/:userId" element={<SellerProfile />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/recycle" element={<RecycleScrap />} />
             <Route path="/recycle/submit" element={<ScrapRequestForm />} />
             <Route path="/donate" element={<DonateItems />} />
@@ -173,4 +187,19 @@ function InnerApp() {
       />
     </div>
   );
+}
+
+function RequireAdmin({ children }) {
+  const { isAuthenticated, user } = useContext(AuthContext);
+  const isAdmin = user?.roles?.some((role) => role?.name === "ADMIN");
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/impact" replace />;
+  }
+
+  return children;
 }

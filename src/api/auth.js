@@ -31,6 +31,12 @@ export const authAPI = {
       body: { refresh } 
     }),
 
+  changePassword: (old_password, new_password, confirm_new_password) =>
+    apiClient("/api/auth/change-password/", {
+      method: "POST",
+      body: { old_password, new_password, confirm_new_password }
+    }),
+
   getUserProfile: () => 
     apiClient("/api/auth/user-profile/", { method: "GET" }),
 

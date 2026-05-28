@@ -14,6 +14,10 @@ export default function AcceptedDonations() {
   const [searchTerm, setSearchTerm] = useState('');
   const [completingId, setCompletingId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [proofFile, setProofFile] = useState(null);
+  const [proofNotes, setProofNotes] = useState('');
 
   useEffect(() => {
     loadRequests();
@@ -85,10 +89,38 @@ export default function AcceptedDonations() {
     const confirmed = window.confirm('Mark this accepted donation pickup as completed?');
     if (!confirmed) return;
 
+    setSelectedRequestId(requestId);
+    setProofFile(null);
+    setProofNotes('');
+    setShowProofModal(true);
+  };
+
+  const submitCompletionWithProof = async () => {
+    if (!selectedRequestId) return;
+    if (!proofFile) {
+      setToast({
+        type: 'error',
+        message: 'Photo proof is required before completing this donation pickup.',
+        key: Date.now(),
+      });
+      return;
+    }
+
     try {
-      setCompletingId(requestId);
-      await donationAPI.completeNGOAcceptedRequest(requestId, {});
-      setRequests((prev) => prev.filter((request) => request.id !== requestId));
+      setCompletingId(selectedRequestId);
+
+      const formData = new FormData();
+      formData.append('photo_proof', proofFile);
+      if (proofNotes.trim()) {
+        formData.append('notes', proofNotes.trim());
+      }
+
+      await donationAPI.completeNGOAcceptedRequest(selectedRequestId, formData);
+      setRequests((prev) => prev.filter((request) => request.id !== selectedRequestId));
+      setShowProofModal(false);
+      setSelectedRequestId(null);
+      setProofFile(null);
+      setProofNotes('');
       setToast({ type: 'success', message: 'Donation pickup marked as completed.', key: Date.now() });
     } catch (err) {
       console.error('Error completing accepted donation:', err);
@@ -404,6 +436,90 @@ export default function AcceptedDonations() {
           message={toast.message}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {showProofModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Upload Photo Proof</h2>
+                <button
+                  onClick={() => {
+                    if (completingId) return;
+                    setShowProofModal(false);
+                    setSelectedRequestId(null);
+                    setProofFile(null);
+                    setProofNotes('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <p className="text-gray-600 mb-4">
+                Upload the NGO completion photo proof required by the backend before marking this donation pickup as completed.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Photo Proof <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                    className="block w-full text-sm border border-gray-300 rounded-lg p-2"
+                    disabled={!!completingId}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    value={proofNotes}
+                    onChange={(e) => setProofNotes(e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Add any completion notes..."
+                    disabled={!!completingId}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (completingId) return;
+                    setShowProofModal(false);
+                    setSelectedRequestId(null);
+                    setProofFile(null);
+                    setProofNotes('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+                  disabled={!!completingId}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={submitCompletionWithProof}
+                  disabled={!!completingId}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {completingId ? 'Uploading...' : 'Upload & Complete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -145,9 +145,24 @@ const adminAPI = {
   // Approve/Reject role application
   reviewRoleApplication: async (applicationId, reviewData) => {
     try {
+      const normalizedAction = String(
+        reviewData?.action || reviewData?.status || ""
+      ).toLowerCase();
+      const normalizedStatus =
+        normalizedAction === "approve"
+          ? "approved"
+          : normalizedAction === "reject"
+          ? "rejected"
+          : reviewData?.status;
+
       const response = await apiClient(`/api/auth/admin/role-applications/${applicationId}/review/`, {
         method: 'PATCH',
-        body: reviewData
+        body: {
+          ...reviewData,
+          action: normalizedAction || undefined,
+          status: normalizedStatus,
+          decision: normalizedStatus,
+        }
       });
       return response;
     } catch (error) {

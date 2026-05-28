@@ -39,12 +39,33 @@ const reportAPI = {
   },
 
   /**
+   * Get reports for the current user
+   * @returns {Promise}
+   */
+  async getMyReports() {
+    return await apiClient("/api/auth/reports/", {
+      method: "GET",
+    });
+  },
+
+  /**
    * Get a specific report by ID
    * @param {number} id - Report ID
    * @returns {Promise}
    */
   async getReportById(id) {
     return await apiClient(`/api/auth/admin/reports/${id}/`, {
+      method: "GET",
+    });
+  },
+
+  /**
+   * Get a specific report by ID for the current user
+   * @param {number} id - Report ID
+   * @returns {Promise}
+   */
+  async getMyReportById(id) {
+    return await apiClient(`/api/auth/reports/${id}/`, {
       method: "GET",
     });
   },

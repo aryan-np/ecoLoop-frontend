@@ -55,7 +55,7 @@ export default function MyReports() {
   const loadReports = async () => {
     setLoading(true);
     try {
-      const response = await reportAPI.getReports();
+      const response = await reportAPI.getMyReports();
       let reportsList = [];
 
       if (response.IsSuccess && response.Result) {
@@ -83,7 +83,7 @@ export default function MyReports() {
   const loadReportDetail = async (reportId) => {
     setDetailLoading(true);
     try {
-      const response = await reportAPI.getReportById(reportId);
+      const response = await reportAPI.getMyReportById(reportId);
       let reportData = null;
 
       if (response.IsSuccess && response.Result) {

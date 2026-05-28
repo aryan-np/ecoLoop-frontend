@@ -25,20 +25,18 @@ export default function VerifyOTP() {
 
     setLoading(true);
     try {
-      const body = { email, purpose, otp };
-      // Always include registration_id for REGISTER purpose
+      let effectiveRegistrationId = registrationId;
+
+      // Always carry registration_id for REGISTER purpose
       if (purpose === "REGISTER") {
-        if (registrationId) {
-          body.registration_id = registrationId;
-        } else if (loc.state?.registration_id) {
-          body.registration_id = loc.state.registration_id;
-        }
+        effectiveRegistrationId = registrationId || loc.state?.registration_id || "";
       }
-      console.log("OTP Request Body:", body); // Debug log
-      const resp = await authAPI.verifyOTP(email, otp, purpose, registrationId);
+
+      const resp = await authAPI.verifyOTP(email, otp, purpose, effectiveRegistrationId);
       if (resp.IsSuccess) {
         if (resp.Result && resp.Result.tokens) {
           login({ ...resp.Result.tokens, user: resp.Result.user });
+          // OTP login always returns the user to the impact dashboard.
           navigate("/impact", { replace: true });
         } else {
           setToast({ type: "success", message: resp.Result?.message || "OTP verified successfully" });

@@ -5,12 +5,12 @@ import AuthContext from "../auth/AuthProvider";
 export default function ProductCard({ product }) {
   const { isAuthenticated } = useContext(AuthContext);
 
-  // Prevent rendering if product is invalid
   if (!product || !product.id) {
     return null;
   }
 
-  // Helper function to safely extract string values (handle objects)
+  const isFavorited = !!(product?.is_favorited || product?.favorite_id);
+
   const getString = (value) => {
     if (!value) return "";
     if (typeof value === "string") return value;
@@ -18,26 +18,19 @@ export default function ProductCard({ product }) {
     return String(value);
   };
 
-  const handleFavoriteClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Favorite functionality here
-  };
-
   return (
     <Link to={`/products/${product.id}`} className="block">
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-xl transition transform hover:scale-105 cursor-pointer h-full flex flex-col">
-        {/* Product Image */}
         <div className="relative w-full h-48 bg-gray-200 overflow-hidden flex items-center justify-center">
-          {(product.images && product.images.length > 0) ? (
-            <img 
-              src={product.images[0].image} 
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0].image}
               alt={product.title}
               className="w-full h-full object-contain"
             />
           ) : product.image ? (
-            <img 
-              src={product.image} 
+            <img
+              src={product.image}
               alt={product.title}
               className="w-full h-full object-contain"
             />
@@ -48,20 +41,22 @@ export default function ProductCard({ product }) {
               </svg>
             </div>
           )}
+
           {isAuthenticated && (
-            <button 
-              onClick={handleFavoriteClick}
-              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition text-2xl bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md"
+            <div
+              className="absolute top-2 right-2 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md text-2xl"
+              title={isFavorited ? "Saved to favorites" : "Not in favorites"}
             >
-              ♡
-            </button>
+              <span className={isFavorited ? "text-red-500" : "text-gray-400"}>
+                {isFavorited ? "♥" : "♡"}
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Product Info */}
         <div className="px-4 py-3 flex-1 flex flex-col">
           <h3 className="font-bold text-lg text-gray-900 mb-1 line-clamp-2">{getString(product.title)}</h3>
-          
+
           <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
             <span className="font-semibold">{getString(product.condition) || "Good"}</span>
             <span>•</span>
@@ -70,7 +65,6 @@ export default function ProductCard({ product }) {
 
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">{getString(product.description) || "No description"}</p>
 
-          {/* Price and Status */}
           <div className="flex items-center justify-between mt-auto">
             <div className="text-lg font-bold text-gray-900">
               {product.is_free ? (
@@ -79,9 +73,11 @@ export default function ProductCard({ product }) {
                 <span>NPR {product.price || "N/A"}</span>
               )}
             </div>
-            <span className={`text-xs font-semibold px-2 py-1 rounded ${
-              product.is_free ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-            }`}>
+            <span
+              className={`text-xs font-semibold px-2 py-1 rounded ${
+                product.is_free ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
               {product.is_free ? "Free" : "For Sale"}
             </span>
           </div>

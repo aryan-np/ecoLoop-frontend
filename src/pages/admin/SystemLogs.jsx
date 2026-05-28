@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import adminAPI from '../../api/admin';
+import apiClient from '../../api/client';
 
 const SystemLogs = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,28 +9,45 @@ const SystemLogs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [previousUrl, setPreviousUrl] = useState(null);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (url = null) => {
     try {
       setLoading(true);
       setError(null);
       
-      const filters = {};
-      if (actionFilter && actionFilter !== 'all') filters.action = actionFilter;
-      if (searchQuery) filters.search = searchQuery;
+      let response;
       
-      const response = await adminAPI.getActivityLogs(filters);
+      if (url) {
+        // Use provided URL for pagination
+        const cleanUrl = url.replace(/^https?:\/\/[^\/]+/, '');
+        response = await apiClient(cleanUrl);
+      } else {
+        // Build filters for initial load
+        const filters = {};
+        if (actionFilter && actionFilter !== 'all') filters.action = actionFilter;
+        if (searchQuery) filters.search = searchQuery;
+        response = await adminAPI.getActivityLogs(filters);
+      }
       
       // Handle paginated response
       if (response?.results && Array.isArray(response.results)) {
         setLogs(response.results);
         setTotalCount(response.count || response.results.length);
+        setNextUrl(response.next || null);
+        setPreviousUrl(response.previous || null);
       } else if (Array.isArray(response)) {
         setLogs(response);
         setTotalCount(response.length);
+        setNextUrl(null);
+        setPreviousUrl(null);
       } else {
         setLogs([]);
         setTotalCount(0);
+        setNextUrl(null);
+        setPreviousUrl(null);
       }
     } catch (err) {
       console.error('Error fetching logs:', err);
@@ -40,8 +58,25 @@ const SystemLogs = () => {
     }
   };
 
+  const handleNextPage = () => {
+    if (nextUrl) {
+      setCurrentPage(prev => prev + 1);
+      fetchLogs(nextUrl);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (previousUrl) {
+      setCurrentPage(prev => prev - 1);
+      fetchLogs(previousUrl);
+    }
+  };
+
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
+      setCurrentPage(1);
+      setNextUrl(null);
+      setPreviousUrl(null);
       fetchLogs();
     }, 500);
 
@@ -212,11 +247,40 @@ const SystemLogs = () => {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Pagination */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <p className="text-sm text-gray-600">
-          Showing {logs.length} of {totalCount} log entries
-        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Stats */}
+          <p className="text-sm text-gray-600">
+            Showing {logs.length} entries from page {currentPage} (Total: {totalCount})
+          </p>
+
+          {/* Pagination Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={handlePreviousPage}
+              disabled={!previousUrl || loading}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                previousUrl && !loading
+                  ? 'bg-teal-600 text-white hover:bg-teal-700'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              ← Previous
+            </button>
+            <button
+              onClick={handleNextPage}
+              disabled={!nextUrl || loading}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                nextUrl && !loading
+                  ? 'bg-teal-600 text-white hover:bg-teal-700'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

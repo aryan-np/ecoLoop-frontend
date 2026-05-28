@@ -52,7 +52,9 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteId, setFavoriteId] = useState(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [messagingLoading, setMessagingLoading] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reviewSummary, setReviewSummary] = useState({ average_rating: 0, total_count: 0 });
@@ -81,6 +83,8 @@ export default function ProductDetail() {
         else throw new Error("Unexpected response format from products endpoint");
 
         setProduct(data);
+        setIsFavorited(data?.is_favorited || false);
+        setFavoriteId(data?.favorite_id || null);
       } catch (err) {
         setError(err?.message || JSON.stringify(err));
       } finally {
@@ -140,9 +144,28 @@ export default function ProductDetail() {
     };
   }, [normalized?.owner_id]);
 
-  const toggleFavorite = () => {
-    setIsFavorite((p) => !p);
-    // TODO: call favorite endpoint when available - will trigger 401 modal if unauthorized
+  const toggleFavorite = async () => {
+    if (!user || favoriteLoading) return;
+
+    setFavoriteLoading(true);
+    try {
+      if (isFavorited && favoriteId) {
+        await productAPI.removeFavorite(favoriteId);
+        setIsFavorited(false);
+        setFavoriteId(null);
+        setToast({ type: "success", message: "Removed from favorites", key: Date.now() });
+      } else if (product?.id) {
+        const res = await productAPI.addFavorite(product.id);
+        setIsFavorited(true);
+        setFavoriteId(res?.id || null);
+        setToast({ type: "success", message: "Added to favorites", key: Date.now() });
+      }
+    } catch (err) {
+      console.error("Error updating favorite:", err);
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to update favorite"), key: Date.now() });
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   const handleMessageSeller = async () => {
@@ -251,17 +274,7 @@ export default function ProductDetail() {
                 <p className="text-lg font-bold text-green-700 mt-2">
                   {normalized.displayPrice}
                 </p>
-              </div>
-
-              {/* Heart */}
-              <button
-                onClick={toggleFavorite}
-                className={`text-2xl leading-none mt-1 ${isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
-                aria-label="favorite"
-                title="Save to favorites"
-              >
-                {isFavorite ? "♥" : "♡"}
-              </button>
+              </div>
             </div>
 
             {/* Details rows (like screenshot) */}
@@ -311,12 +324,13 @@ export default function ProductDetail() {
 
                 <button
                   onClick={toggleFavorite}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50 transition"
+                  disabled={favoriteLoading || !user}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill={isFavorited ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
-                  Save to Favorites
+                  {isFavorited ? "Saved to Favorites" : "Save to Favorites"}
                 </button>
 
                 {/* Khalti Pay — show for any priced listing that isn't donate/recycle */}
@@ -406,9 +420,12 @@ export default function ProductDetail() {
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
         listingId={id}
+        targetUserId={normalized?.owner_id}
       />
 
       {toast && <Toast type={toast.type} message={toast.message} duration={3000} onClose={() => setToast(null)} />}
     </main>
   );
 }
+
+

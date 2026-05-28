@@ -7,6 +7,7 @@ import logo from "../../logo.png";
 
 export default function Register() {
   const [form, setForm] = useState({ email: "", full_name: "", phone_number: "", password: "", confirm_password: "" });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Register() {
     if (!form.phone_number || !/^[0-9]{10}$/.test(form.phone_number)) return "Phone must be 10 digits";
     if (!form.password || form.password.length < 8) return "Password must be at least 8 chars";
     if (form.password !== form.confirm_password) return "Passwords do not match";
+    if (!agreedToTerms) return "You must agree to Terms and Conditions";
     return null;
   };
 
@@ -123,16 +125,29 @@ export default function Register() {
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <input type="checkbox" id="terms" className="w-4 h-4 rounded border-gray-300" />
+            <input
+              type="checkbox"
+              id="terms"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300"
+            />
             <label htmlFor="terms" className="text-gray-600">
-              I accept the <a href="#" className="text-green-600 font-semibold hover:underline">Terms and Conditions</a>
+              I accept the{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/terms")}
+                className="text-green-600 font-semibold hover:underline"
+              >
+                Terms and Conditions
+              </button>
             </label>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+            disabled={loading || !agreedToTerms}
+            className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? "Creating Account..." : "Create Account"}
           </button>
