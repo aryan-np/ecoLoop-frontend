@@ -12,12 +12,41 @@ const getString = (value) => {
   return String(value);
 };
 
+const getItemType = (item) => item?.item_type || "product";
+
+const normalizeCollection = (items, source) =>
+  (items || [])
+    .filter((item) => item && typeof item === "object" && item.id)
+    .map((item) => ({
+      ...item,
+      item_type: getItemType(item),
+      transaction_source: source,
+    }));
+
+const getProductStatus = (item) => {
+  const itemType = getItemType(item);
+  const status = (item.status || "available").toLowerCase();
+
+  if (itemType === "scrap" || itemType === "donation") {
+    return status === "pending" ? "available" : status;
+  }
+
+  return status;
+};
+
+const getBoughtStatus = (item) => {
+  if ((item.status || "").toLowerCase() === "sold") return "bought";
+  return item?.sold_to ? "bought" : "processing";
+};
+
 export default function MyListings() {
   const navigate = useNavigate();
   const { isAuthenticated } = useContext(AuthContext);
   const [listings, setListings] = useState([]);
+  const [boughtItems, setBoughtItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+  const [section, setSection] = useState("listings");
   const [activeTab, setActiveTab] = useState("available");
   const [updating, setUpdating] = useState(null);
   const [typeFilter, setTypeFilter] = useState("all");
@@ -27,34 +56,40 @@ export default function MyListings() {
       navigate("/login");
       return;
     }
-    loadListings();
+    loadTransactions();
   }, [isAuthenticated, navigate]);
 
-  const loadListings = async () => {
+  const loadTransactions = async () => {
     setLoading(true);
     try {
-      const resp = await productAPI.getListings();
+      const [listingResp, boughtResp] = await Promise.all([
+        productAPI.getListings(),
+        productAPI.getBoughtItems(),
+      ]);
 
-      let allListings = [];
-
-      if (resp && resp.IsSuccess && resp.Result) {
-        const result = resp.Result;
-        
-        // Combine products, scrap_requests, and donation_requests
-        const products = Array.isArray(result.products) ? result.products : [];
-        const scrapRequests = Array.isArray(result.scrap_requests) ? result.scrap_requests : [];
-        const donationRequests = Array.isArray(result.donation_requests) ? result.donation_requests : [];
-        
-        allListings = [...products, ...scrapRequests, ...donationRequests];
-      } else if (Array.isArray(resp)) {
-        allListings = resp;
+      let ownedItems = [];
+      if (listingResp?.IsSuccess && listingResp?.Result) {
+        const result = listingResp.Result;
+        ownedItems = [
+          ...normalizeCollection(result.products, "listing"),
+          ...normalizeCollection(result.scrap_requests, "listing"),
+          ...normalizeCollection(result.donation_requests, "listing"),
+        ];
+      } else if (Array.isArray(listingResp)) {
+        ownedItems = normalizeCollection(listingResp, "listing");
       }
 
-      const validListings = (allListings || []).filter(item => item && typeof item === 'object' && item.id);
-      setListings(validListings);
+      const boughtResults =
+        boughtResp?.Result?.results ||
+        boughtResp?.Result ||
+        boughtResp?.results ||
+        boughtResp;
+
+      setListings(ownedItems);
+      setBoughtItems(normalizeCollection(Array.isArray(boughtResults) ? boughtResults : [], "bought"));
     } catch (err) {
-      console.error("Error loading listings:", err);
-      setToast({ type: "error", message: getErrorMessage(err, "Failed to load listings"), key: Date.now() });
+      console.error("Error loading transactions:", err);
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to load transactions"), key: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -66,13 +101,13 @@ export default function MyListings() {
       const resp = await productAPI.partialUpdateProduct(productId, { status: "sold" });
 
       if (resp && (resp.IsSuccess || resp.id)) {
-        setToast({ type: "success", message: "Product marked as sold" });
-        loadListings();
+        setToast({ type: "success", message: "Product marked as sold", key: Date.now() });
+        loadTransactions();
       } else {
-        setToast({ type: "error", message: getErrorMessage(resp, "Failed to mark as sold") });
+        setToast({ type: "error", message: getErrorMessage(resp, "Failed to mark as sold"), key: Date.now() });
       }
     } catch (err) {
-      setToast({ type: "error", message: getErrorMessage(err, "Failed to mark as sold") });
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to mark as sold"), key: Date.now() });
     } finally {
       setUpdating(null);
     }
@@ -84,10 +119,10 @@ export default function MyListings() {
     setUpdating(productId);
     try {
       await productAPI.deleteProduct(productId);
-      setToast({ type: "success", message: "Product deleted successfully" });
-      loadListings();
+      setToast({ type: "success", message: "Product deleted successfully", key: Date.now() });
+      loadTransactions();
     } catch (err) {
-      setToast({ type: "error", message: getErrorMessage(err, "Failed to delete product") });
+      setToast({ type: "error", message: getErrorMessage(err, "Failed to delete product"), key: Date.now() });
     } finally {
       setUpdating(null);
     }
@@ -97,80 +132,60 @@ export default function MyListings() {
     navigate(`/products/${productId}/edit`);
   };
 
-  // Filter products by status and type
+  const getStatusCount = (status) =>
+    listings.filter((item) => getProductStatus(item) === status).length;
+
+  const getTypeCount = (type) => {
+    const availableItems = listings.filter((item) => getProductStatus(item) === "available");
+    if (type === "all") return availableItems.length;
+    return availableItems.filter((item) => getItemType(item) === type).length;
+  };
+
+  const boughtStatusCount = (status) =>
+    boughtItems.filter((item) => getBoughtStatus(item) === status).length;
+
   const filteredListings = listings.filter((item) => {
-    const status = (item.status || "available").toLowerCase();
-    // For scrap and donation, "Pending" should be treated as "available"
-    if (item.item_type === "scrap" || item.item_type === "donation") {
-      const mappedStatus = status === "pending" ? "available" : status;
-      if (mappedStatus !== activeTab) return false;
-    } else {
-      if (status !== activeTab) return false;
-    }
-    
-    // Apply type filter only on Active tab
-    if (activeTab === "available") {
-      if (typeFilter === "all") return true;
-      if (typeFilter === "product") return item.item_type === "product" || !item.item_type;
-      return item.item_type === typeFilter;
-    }
-    
-    return true;
+    if (getProductStatus(item) !== activeTab) return false;
+    if (activeTab !== "available" || typeFilter === "all") return true;
+    return getItemType(item) === typeFilter;
   });
 
-  // Count products by status
-  const getStatusCount = (status) => {
-    return listings.filter((item) => {
-      const itemStatus = (item.status || "available").toLowerCase();
-      // For scrap and donation, "Pending" should be treated as "available"
-      if (item.item_type === "scrap" || item.item_type === "donation") {
-        const mappedStatus = itemStatus === "pending" ? "available" : itemStatus;
-        return mappedStatus === status;
-      }
-      return itemStatus === status;
-    }).length;
-  };
+  const filteredBoughtItems = boughtItems.filter((item) => getBoughtStatus(item) === activeTab);
 
-  // Count items by type (only for available/active items)
-  const getTypeCount = (type) => {
-    const availableItems = listings.filter((item) => {
-      const status = (item.status || "available").toLowerCase();
-      if (item.item_type === "scrap" || item.item_type === "donation") {
-        const mappedStatus = status === "pending" ? "available" : status;
-        return mappedStatus === "available";
-      }
-      return status === "available";
-    });
-    
-    if (type === "all") return availableItems.length;
-    if (type === "product") return availableItems.filter(item => item.item_type === "product" || !item.item_type).length;
-    return availableItems.filter(item => item.item_type === type).length;
-  };
-
-  const STATUS_TABS = [
+  const listingTabs = [
     { key: "available", label: "Active", count: getStatusCount("available") },
     { key: "sold", label: "Sold", count: getStatusCount("sold") },
     { key: "donated", label: "Donated", count: getStatusCount("donated") },
     { key: "recycled", label: "Recycled", count: getStatusCount("recycled") },
   ];
 
-  // Helper function to get display information based on item type
+  const boughtTabs = [
+    { key: "bought", label: "Bought", count: boughtStatusCount("bought") },
+    { key: "processing", label: "Processing", count: boughtStatusCount("processing") },
+  ];
+
+  const activeItems = section === "listings" ? filteredListings : filteredBoughtItems;
+
   const getItemDisplayInfo = (item) => {
-    if (item.item_type === "scrap") {
+    const itemType = getItemType(item);
+
+    if (itemType === "scrap") {
       return {
         title: item.category_details?.material_type || "Scrap Request",
-        subtitle: `${item.weight_kg} kg - ${item.category_details?.material_type || ''}`,
+        subtitle: `${item.weight_kg} kg - ${item.category_details?.material_type || ""}`,
         badge: "Recycle",
         badgeColor: "bg-teal-600 text-white",
         price: `NPR ${(parseFloat(item.weight_kg || 0) * parseFloat(item.category_details?.rate_per_kg || 0)).toFixed(2)}`,
         location: item.pickup_address,
         image: item.images && item.images.length > 0 ? item.images[0].image : null,
-        description: `Pickup: ${item.preferred_time_slot || 'N/A'} | Condition: ${item.condition || 'N/A'}`,
+        description: `Pickup: ${item.preferred_time_slot || "N/A"} | Condition: ${item.condition || "N/A"}`,
       };
-    } else if (item.item_type === "donation") {
+    }
+
+    if (itemType === "donation") {
       return {
         title: item.category_details?.name || "Donation Request",
-        subtitle: `Qty: ${item.quantity || 'N/A'} - ${item.condition_details?.name || ''}`,
+        subtitle: `Qty: ${item.quantity || "N/A"} - ${item.condition_details?.name || ""}`,
         badge: "Donate",
         badgeColor: "bg-purple-600 text-white",
         price: "Free",
@@ -178,104 +193,136 @@ export default function MyListings() {
         image: item.images && item.images.length > 0 ? item.images[0].image : null,
         description: item.notes || "No additional notes",
       };
-    } else {
-      // Product
-      return {
-        title: item.title || "Product",
-        subtitle: `${getString(item.category)} - ${getString(item.condition)}`,
-        badge: "Sell",
-        badgeColor: "bg-green-600 text-white",
-        price: item.is_free ? "Free" : `NPR ${item.price || 0}`,
-        location: item.location,
-        image: item.images && item.images.length > 0 ? item.images[0].image : item.image,
-        description: item.description || "",
-      };
     }
+
+    return {
+      title: item.title || "Product",
+      subtitle: `${getString(item.category)} - ${getString(item.condition)}`,
+      badge: item.product_type === "donate" ? "Donate" : item.product_type === "recycle" ? "Recycle" : "Sell",
+      badgeColor:
+        item.product_type === "donate"
+          ? "bg-purple-600 text-white"
+          : item.product_type === "recycle"
+            ? "bg-teal-600 text-white"
+            : "bg-green-600 text-white",
+      price: item.is_free ? "Free" : `NPR ${item.price || 0}`,
+      location: item.location,
+      image: item.images && item.images.length > 0 ? item.images[0].image : item.image,
+      description: item.description || "",
+    };
   };
+
+  const emptyMessage =
+    section === "listings"
+      ? `No ${activeTab} items in your listings yet.`
+      : activeTab === "bought"
+        ? "You have not bought any products yet."
+        : "No purchases are currently processing.";
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-8">
-      {toast && <Toast message={toast.message} type={toast.type} duration={2000} />}
+      {toast && <Toast message={toast.message} type={toast.type} duration={2000} onClose={() => setToast(null)} />}
 
-      {/* Header */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">My Listings</h1>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-medium text-green-700">Account activity</p>
+            <h1 className="text-3xl font-bold text-gray-900">My Transactions</h1>
+            <p className="text-sm text-gray-600 mt-2">
+              Track what you have listed and the products you have bought.
+            </p>
+          </div>
 
-      {/* Status Tabs with Type Filter */}
-      <div className="border-b border-gray-200 mb-6 flex items-center justify-between">
-        {/* Type Filter Dropdown - Only visible on Active tab */}
-        <div className="flex-shrink-0">
-          {activeTab === "available" ? (
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              <option value="all">All Types ({getTypeCount("all")})</option>
-              <option value="product">Sell ({getTypeCount("product")})</option>
-              <option value="donation">Donation ({getTypeCount("donation")})</option>
-              <option value="scrap">Scrap ({getTypeCount("scrap")})</option>
-            </select>
-          ) : (
-            <div className="h-10"></div>
-          )}
-        </div>
-        
-        {/* Status Tabs */}
-        <div className="flex gap-8">
-          {STATUS_TABS.map((tab) => (
+          <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 self-start">
             <button
-              key={tab.key}
               onClick={() => {
-                setActiveTab(tab.key);
-                // Reset type filter when switching tabs
-                if (tab.key !== "available") {
-                  setTypeFilter("all");
-                }
+                setSection("listings");
+                setActiveTab("available");
               }}
-              className={`py-3 px-1 font-medium text-sm border-b-2 transition ${
-                activeTab === tab.key
-                  ? "border-green-600 text-green-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                section === "listings" ? "bg-green-600 text-white" : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              {tab.label} ({tab.count})
+              My Listings ({listings.length})
             </button>
-          ))}
+            <button
+              onClick={() => {
+                setSection("bought");
+                setActiveTab("bought");
+                setTypeFilter("all");
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                section === "bought" ? "bg-green-600 text-white" : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Bought Items ({boughtItems.length})
+            </button>
+          </div>
+        </div>
+
+        <div className="border-b border-gray-200 flex flex-col gap-4 pb-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex-shrink-0">
+            {section === "listings" && activeTab === "available" ? (
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">All Types ({getTypeCount("all")})</option>
+                <option value="product">Sell ({getTypeCount("product")})</option>
+                <option value="donation">Donation ({getTypeCount("donation")})</option>
+                <option value="scrap">Scrap ({getTypeCount("scrap")})</option>
+              </select>
+            ) : (
+              <div className="h-10" />
+            )}
+          </div>
+
+          <div className="flex gap-6 flex-wrap">
+            {(section === "listings" ? listingTabs : boughtTabs).map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key !== "available") setTypeFilter("all");
+                }}
+                className={`py-3 px-1 font-medium text-sm border-b-2 transition ${
+                  activeTab === tab.key
+                    ? "border-green-600 text-green-600"
+                    : "border-transparent text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Products List */}
       {loading ? (
         <div className="text-center py-12">
-          <p className="text-gray-600">Loading listings...</p>
+          <p className="text-gray-600">Loading transactions...</p>
         </div>
-      ) : filteredListings.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-600">No {activeTab} listings</p>
+      ) : activeItems.length === 0 ? (
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center mt-6">
+          <p className="text-gray-600">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredListings.map((item) => {
-            const status = (item.status || "available").toLowerCase();
-            const isProduct = item.item_type === "product";
-            const isAvailableForSale = status === "available" && isProduct;
+        <div className="space-y-4 mt-6">
+          {activeItems.map((item) => {
+            const itemType = getItemType(item);
+            const status = getProductStatus(item);
+            const isProduct = itemType === "product";
+            const isOwnedListing = section === "listings";
+            const isAvailableForSale = isOwnedListing && status === "available" && isProduct;
             const displayInfo = getItemDisplayInfo(item);
 
             return (
-              <div
-                key={`${item.item_type}-${item.id}`}
-                className="bg-white rounded-lg border border-gray-200 p-6"
-              >
-                {/* Top row: Image, Details, Price */}
+              <div key={`${section}-${itemType}-${item.id}`} className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex gap-6 mb-4">
-                  {/* Product Image */}
                   <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     {displayInfo.image ? (
-                      <img
-                        src={displayInfo.image}
-                        alt={displayInfo.title}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={displayInfo.image} alt={displayInfo.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,39 +332,45 @@ export default function MyListings() {
                     )}
                   </div>
 
-                  {/* Item Details */}
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{displayInfo.title}</h3>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{displayInfo.title}</h3>
 
-                    <div className="flex gap-2 mb-3 flex-wrap">
-                      <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${displayInfo.badgeColor}`}>
-                        {displayInfo.badge}
-                      </span>
-                      {item.item_type === "product" && (
-                        <>
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                            {getString(item.category)}
+                        <div className="flex gap-2 mb-3 flex-wrap">
+                          <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${displayInfo.badgeColor}`}>
+                            {displayInfo.badge}
                           </span>
-                          <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded">
-                            {getString(item.condition)}
+
+                          {isProduct && (
+                            <>
+                              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                                {getString(item.category)}
+                              </span>
+                              <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded">
+                                {getString(item.condition)}
+                              </span>
+                            </>
+                          )}
+
+                          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded">
+                            {section === "bought" ? `Status: ${getBoughtStatus(item)}` : displayInfo.subtitle || `Status: ${status}`}
                           </span>
-                        </>
-                      )}
-                      {item.item_type === "scrap" && (
-                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded">
-                          {displayInfo.subtitle}
-                        </span>
-                      )}
-                      {item.item_type === "donation" && (
-                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded">
-                          {displayInfo.subtitle}
-                        </span>
-                      )}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${displayInfo.price === "Free" ? "text-green-600" : "text-gray-900"}`}>
+                          {displayInfo.price}
+                        </p>
+                        {section === "bought" && item.sold_to && (
+                          <p className="text-xs text-gray-500 mt-1">Purchased successfully</p>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">{displayInfo.description}</p>
 
-                    {/* Location */}
                     {displayInfo.location && (
                       <p className="text-sm text-gray-600 flex items-center gap-1">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -327,66 +380,39 @@ export default function MyListings() {
                       </p>
                     )}
                   </div>
-
-                  {/* Price */}
-                  <div className="text-right">
-                    {typeof displayInfo.price === 'string' && displayInfo.price === "Free" ? (
-                      <p className="text-lg font-bold text-green-600">Free</p>
-                    ) : (
-                      <p className="text-lg font-bold text-gray-900">{displayInfo.price}</p>
-                    )}
-                  </div>
                 </div>
 
-                {/* Buttons Row Below - Only for products */}
-                {isProduct && (
-                  <div className="flex gap-2 flex-wrap">
-                    {isAvailableForSale && (
+                <div className="flex gap-2 flex-wrap">
+                  {isOwnedListing && isAvailableForSale && (
+                    <button
+                      onClick={() => markAsSold(item.id)}
+                      disabled={updating === item.id}
+                      className="px-4 py-2 bg-green-100 text-green-700 font-semibold rounded hover:bg-green-200 disabled:opacity-50 transition text-sm flex items-center justify-center gap-1"
+                    >
+                      {updating === item.id ? "Loading..." : "Mark as Sold"}
+                    </button>
+                  )}
+
+                  {isOwnedListing && isProduct && status === "available" && (
+                    <>
                       <button
-                        onClick={() => markAsSold(item.id)}
+                        onClick={() => editProduct(item.id)}
                         disabled={updating === item.id}
-                        className="px-4 py-2 bg-green-100 text-green-700 font-semibold rounded hover:bg-green-200 disabled:opacity-50 transition text-sm flex items-center justify-center gap-1"
+                        className="px-4 py-2 bg-blue-50 text-blue-600 font-semibold rounded hover:bg-blue-100 disabled:opacity-50 transition text-sm"
                       >
-                        {updating === item.id ? (
-                          <>Loading...</>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                            </svg>
-                            Mark as Sold
-                          </>
-                        )}
+                        Edit
                       </button>
-                    )}
 
-                    {status === "available" && (
-                      <>
-                        <button
-                          onClick={() => editProduct(item.id)}
-                          disabled={updating === item.id}
-                          className="px-4 py-2 bg-blue-50 text-blue-600 font-semibold rounded hover:bg-blue-100 disabled:opacity-50 transition text-sm flex items-center justify-center gap-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => deleteProduct(item.id)}
-                          disabled={updating === item.id}
-                          className="px-4 py-2 bg-red-50 text-red-600 font-semibold rounded hover:bg-red-100 disabled:opacity-50 transition text-sm flex items-center justify-center gap-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+                      <button
+                        onClick={() => deleteProduct(item.id)}
+                        disabled={updating === item.id}
+                        className="px-4 py-2 bg-red-50 text-red-600 font-semibold rounded hover:bg-red-100 disabled:opacity-50 transition text-sm"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}

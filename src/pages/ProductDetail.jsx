@@ -300,7 +300,7 @@ export default function ProductDetail() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-blue-900 font-medium">This is your listing</p>
                 <button
-                  onClick={() => navigate("/my-listings")}
+                  onClick={() => navigate("/my-transactions")}
                   className="text-sm text-blue-600 hover:text-blue-700 font-semibold mt-2 flex items-center gap-1"
                 >
                   Manage in My Listings →
@@ -341,6 +341,7 @@ export default function ProductDetail() {
                   normalized.price && (
                     <KhaltiPayButton
                       listing={normalized}
+                      productId={normalized.id}
                       onError={(err) => {
                         if (!err?.isUnauthorized) {
                           setToast({ type: "error", message: getErrorMessage(err, "Payment failed."), key: Date.now() });

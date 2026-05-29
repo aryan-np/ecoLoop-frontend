@@ -214,7 +214,7 @@ export default function ProductForm() {
                     });
                     if (resp && (resp.IsSuccess || resp.id)) {
                       setToast({ type: "success", message: "Product marked as sold!", key: Date.now() });
-                      setTimeout(() => navigate("/my-listings"), 1500);
+                      setTimeout(() => navigate("/my-transactions"), 1500);
                     } else {
                       setToast({ type: "error", message: getErrorMessage(resp, "Failed to mark as sold"), key: Date.now() });
                     }

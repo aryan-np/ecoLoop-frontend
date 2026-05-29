@@ -91,7 +91,8 @@ function InnerApp() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/verification-application/:type" element={<VerificationApplication />} />
             <Route path="/application-status" element={<ApplicationStatus />} />
-            <Route path="/my-listings" element={<MyListings />} />
+            <Route path="/my-listings" element={<Navigate to="/my-transactions" replace />} />
+            <Route path="/my-transactions" element={<MyListings />} />
             <Route path="/my-reports" element={<MyReports />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/favorites" element={<Favorites />} />

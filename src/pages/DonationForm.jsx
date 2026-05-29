@@ -374,10 +374,10 @@ function SuccessModal({ category, onClose }) {
         {/* Action Buttons */}
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => navigate('/my-listings')}
+            onClick={() => navigate('/my-transactions')}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition"
           >
-            View My Listings
+            View My Transactions
           </button>
           <button
             onClick={() => navigate('/products')}

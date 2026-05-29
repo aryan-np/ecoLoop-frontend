@@ -57,6 +57,10 @@ export const productAPI = {
   getListings: () => 
     apiClient("/api/product/listing/", { method: "GET" }),
 
+  // Get products bought by the current user
+  getBoughtItems: () =>
+    apiClient("/api/product/bought-items/", { method: "GET" }),
+
   // Get product categories
   getCategories: () => 
     apiClient("/api/product/categories/", { method: "GET" }),

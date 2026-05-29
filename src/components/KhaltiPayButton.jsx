@@ -4,7 +4,7 @@ import { getErrorMessage } from "../utils/errorHandler";
 import Toast from "./Toast";
 import AuthContext from "../auth/AuthProvider";
 
-export default function KhaltiPayButton({ listing, onError }) {
+export default function KhaltiPayButton({ listing, productId, threadId, onError }) {
   const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
@@ -20,6 +20,8 @@ export default function KhaltiPayButton({ listing, onError }) {
         amount,
         purchase_order_name: listing.title || "EcoLoop Product",
         return_url: returnUrl,
+        ...(threadId ? { thread_id: threadId } : {}),
+        ...(productId ? { product_id: productId } : {}),
         customer_info: {
           name: user?.full_name || user?.name || "Customer",
           email: user?.email || "",
